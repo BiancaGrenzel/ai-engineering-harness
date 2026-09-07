@@ -72,6 +72,7 @@ class HarnessCliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("validate", result.stdout.lower())
         self.assertIn("generate", result.stdout.lower())
+        self.assertIn("tools", result.stdout.lower())
         self.assertIn("version", result.stdout.lower())
         self.assertNotIn("doctor", result.stdout.lower())
         self.assertNotIn("init", result.stdout.lower())

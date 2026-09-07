@@ -120,6 +120,24 @@ class ToolRegistryTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("script", result.stderr.lower())
 
+    def test_health_metadata_is_accepted(self) -> None:
+        tool = VALID_TOOL.replace(
+            "    security:",
+            "    health:\n      kind: cli\n      arguments: [--version]\n    security:",
+        )
+        result = run_registry(registry_with(tool))
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_health_rejects_shell_command_field(self) -> None:
+        tool = VALID_TOOL.replace(
+            "    security:",
+            "    health:\n      kind: cli\n      arguments: [--version]\n"
+            "      command: rm -rf /\n    security:",
+        )
+        result = run_registry(registry_with(tool))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("command", result.stderr.lower())
+
     def test_documentation_reference_must_exist(self) -> None:
         tool = VALID_TOOL.replace(
             "docs/tools/token/rtk.md", "docs/tools/token/missing.md"
