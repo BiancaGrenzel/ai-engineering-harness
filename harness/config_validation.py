@@ -4,6 +4,10 @@
 Syntax validation only. It does not detect, install, configure, or execute Tools.
 
 Shared by ``scripts/validate-config.py`` and ``harness validate``.
+
+Schemas and the Tool Registry are loaded from the content pack. Project intent
+is ``.harness/harness.yaml``; consumer projects do not need local ``schemas/``
+or ``tools/``.
 """
 
 from __future__ import annotations
@@ -163,25 +167,55 @@ def validate_registry_paths(registry_path: Path, schema_path: Path, root: Path) 
     return 0
 
 
-def validate_repository(root: Path) -> int:
-    """Validate project configuration and a Registry when the project provides one."""
-    config_code = validate_paths(
-        root / ".harness" / "harness.yaml", root / "schemas" / "harness.schema.json"
+def _content_pack_paths() -> tuple[Path, Path, Path, Path]:
+    """Return (pack_root, harness_schema, registry_schema, registry_path)."""
+    from harness.content.pack import ContentPackError, content_pack_root
+
+    try:
+        pack = content_pack_root()
+    except ContentPackError as exc:
+        raise FileNotFoundError(str(exc)) from exc
+    return (
+        pack,
+        pack / "schemas" / "harness.schema.json",
+        pack / "schemas" / "tool-registry.schema.json",
+        pack / "tools" / "registry.yaml",
     )
+
+
+def validate_repository(root: Path) -> int:
+    """Validate project intent against the content pack and resolve selections."""
+    try:
+        pack, harness_schema, registry_schema, registry_file = _content_pack_paths()
+    except FileNotFoundError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    config_code = validate_paths(root / ".harness" / "harness.yaml", harness_schema)
     if config_code != 0:
         return config_code
 
-    registry_path = root / "tools" / "registry.yaml"
-    if not registry_path.is_file():
+    try:
+        from adapters.common.resolve import ResolutionError, resolve_harness
+    except ImportError as exc:  # pragma: no cover
+        print(f"Unable to import resolution helpers: {exc}", file=sys.stderr)
+        return 1
+
+    try:
+        resolve_harness(root)
+    except ResolutionError as exc:
+        print("Harness configuration is invalid.\n", file=sys.stderr)
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    if not registry_file.is_file():
         return 0
-    return validate_registry_paths(
-        registry_path, root / "schemas" / "tool-registry.schema.json", root
-    )
+    return validate_registry_paths(registry_file, registry_schema, pack)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Validate Harness configuration and, when present, the Tool Registry."
+        description="Validate Harness configuration and the Tool Registry."
     )
     parser.add_argument(
         "--config",
@@ -205,7 +239,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--schema",
         type=Path,
         default=None,
-        help="Path to JSON Schema (default: <repo>/schemas/harness.schema.json)",
+        help="Path to JSON Schema (default: content pack schemas/harness.schema.json)",
     )
     return parser
 
@@ -213,12 +247,21 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     root = repo_root_from_script()
+    try:
+        pack, harness_schema, registry_schema, registry_file = _content_pack_paths()
+    except FileNotFoundError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
     if args.registry is not None or args.registry_schema is not None:
-        registry_path = args.registry or (root / "tools" / "registry.yaml")
-        schema_path = args.registry_schema or (root / "schemas" / "tool-registry.schema.json")
-        return validate_registry_paths(registry_path.resolve(), schema_path.resolve(), root)
+        registry_path = args.registry or registry_file
+        schema_path = args.registry_schema or registry_schema
+        # Documentation paths are pack-relative (authoring root or bundled pack).
+        return validate_registry_paths(
+            registry_path.resolve(), schema_path.resolve(), pack
+        )
     if args.config is None and args.schema is None:
         return validate_repository(root)
     config_path = args.config or (root / ".harness" / "harness.yaml")
-    schema_path = args.schema or (root / "schemas" / "harness.schema.json")
+    schema_path = args.schema or harness_schema
     return validate_paths(config_path.resolve(), schema_path.resolve())

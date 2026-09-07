@@ -59,10 +59,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     init = sub.add_parser(
         "init",
-        help="Initialize a Harness-enabled project from the content pack",
+        help="Initialize project intent (.harness/harness.yaml)",
         description=(
-            "Materialize project content (schemas, profile, rules, skills, "
-            "tools registry, and related docs) into the target directory. "
+            "Create project intent only (.harness/harness.yaml) selecting a "
+            "Profile from the installed content pack. Does not copy profiles/, "
+            "rules/, skills/, schemas/, tools/, or docs/ into the project. "
             "Does not generate vendor projections (.cursor/, .claude/); "
             "use harness generate for that."
         ),
@@ -76,7 +77,7 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument(
         "--profile",
         default=None,
-        help="Profile to materialize (required when stdin is non-interactive)",
+        help="Profile to select (required when stdin is non-interactive)",
     )
     init.add_argument(
         "--dry-run",
@@ -87,11 +88,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate = sub.add_parser(
         "validate",
-        help="Validate Harness configuration and the Tool Registry when present",
+        help="Validate project intent against the content pack",
         description=(
-            "Validate project Harness configuration and a provided Tool Registry "
-            "(syntax only). Uses schemas/harness.schema.json and "
-            "schemas/tool-registry.schema.json."
+            "Validate .harness/harness.yaml against content-pack schemas, "
+            "resolve the selected Profile / Rules / Skills / Tools from the "
+            "pack, and validate the packaged Tool Registry (syntax only)."
         ),
     )
     validate.add_argument(
@@ -137,7 +138,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     tools = sub.add_parser(
         "tools",
-        help="Inspect Tools from the project Tool Registry",
+        help="Inspect Tools from the content-pack Tool Registry",
         description=(
             "Thin Tool diagnostics over Registry resolution, Detection, and Health. "
             "Does not install Tools or modify configuration."
@@ -149,8 +150,8 @@ def build_parser() -> argparse.ArgumentParser:
         "health",
         help="Run a read-only health check for one Tool",
         description=(
-            "Resolve a Tool from tools/registry.yaml, detect it on the local host, "
-            "and run its declarative health probe when declared. "
+            "Resolve a Tool from the content-pack tools/registry.yaml, detect it "
+            "on the local host, and run its declarative health probe when declared. "
             "Health logic lives in harness.tools; this command only presents results."
         ),
     )

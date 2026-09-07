@@ -1,4 +1,4 @@
-"""``harness init`` — materialize a Harness-enabled project from the content pack."""
+"""``harness init`` — create project intent only (``.harness/harness.yaml``)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 from harness.content.materialize import MaterializeReport, format_report, materialize
 from harness.content.pack import (
     ContentPackError,
-    build_profile_file_map,
+    build_intent_file_map,
     content_pack_root,
     list_profiles,
 )
@@ -87,7 +87,7 @@ def run_init(
     dry_run: bool = False,
     interactive: bool | None = None,
 ) -> tuple[int, MaterializeReport | None]:
-    """Initialize a Harness-enabled project. Returns ``(exit_code, report)``."""
+    """Initialize project intent only. Returns ``(exit_code, report)``."""
     try:
         project_root = resolve_init_root(root)
     except (FileNotFoundError, NotADirectoryError) as exc:
@@ -108,7 +108,7 @@ def run_init(
         )
 
     try:
-        files = build_profile_file_map(chosen)
+        files = build_intent_file_map(chosen)
     except ContentPackError as exc:
         print(str(exc), file=sys.stderr)
         return 1, None
@@ -126,9 +126,9 @@ def run_init(
     if dry_run:
         print("Dry-run complete. No files were written.")
     elif report.created:
-        print(f"Initialized Harness project with profile '{chosen}'.")
+        print(f"Initialized Harness project intent with profile '{chosen}'.")
         print("Next: harness validate && harness generate <adapter>")
     else:
-        print(f"Harness project already up to date for profile '{chosen}'.")
+        print(f"Harness project intent already up to date for profile '{chosen}'.")
 
     return 0, report
