@@ -1,0 +1,19 @@
+# Include canonical project content in sdists so wheels built from an sdist
+# can still populate harness/content/_data via the setuptools build hook.
+include pyproject.toml
+include setup.py
+include README.md
+include LICENSE
+include CHANGELOG.md
+
+graft harness
+graft adapters
+
+recursive-include schemas *.json
+recursive-include profiles *.yaml
+recursive-include rules *.md
+recursive-include skills *.md
+include tools/registry.yaml
+recursive-include docs/tools *.md
+
+global-exclude __pycache__ *.py[cod] .DS_Store

@@ -1,0 +1,3 @@
+# Build-time destination for the read-only content pack (see setup.py).
+# Canonical sources remain at the repository root; this directory is populated
+# inside the wheel build tree, not committed as a second source of truth.

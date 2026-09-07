@@ -54,3 +54,4 @@ exclude = ["tests*", "scripts*", "docs*", "profiles*", "rules*", "skills*", "too
 [tool.setuptools.package-data]
 "adapters.cursor" = ["adapter.yaml"]
 "adapters.claude" = ["adapter.yaml"]
+"harness.content" = ["_data/**/*"]
