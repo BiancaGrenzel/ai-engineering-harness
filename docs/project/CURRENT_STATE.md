@@ -15,8 +15,8 @@ Snapshot based on the repository working tree on 2026-09-07. Status reflects obs
 | Cursor adapter | Experimental | Generates a Cursor projection from canonical configuration with fail-closed conflict handling. |
 | Claude adapter | Experimental | Generates a Claude Code projection (`.claude/rules`, `.claude/skills`) without managing `CLAUDE.md`. |
 | CLI | Implemented | Thin `init`, `validate`, `generate cursor|claude`, `tools health`, and `version` interface. |
-| Packaging | Implemented | Local `pip install .` exposes `harness` console script and a read-only content pack for `init`. |
-| Project bootstrap | Implemented | `harness init --profile software-engineer` materializes project content; fail-closed conflicts; dry-run. |
+| Packaging | Implemented | Local `pip install .` exposes `harness` console script and a read-only content pack. |
+| Project bootstrap | Implemented | `harness init --profile software-engineer` creates project intent only; fail-closed conflicts; dry-run. |
 | Security Profiles | Planned | No security-specific Profile exists yet; security is currently a selected Rule category. |
 
 ## Commands
@@ -44,10 +44,13 @@ python -m unittest discover -s tests -q
 ## Layers
 
 ```text
-Installed Engine     → harness/ + adapters/ (+ read-only content pack)
-Project Content      → .harness/, profiles/, rules/, skills/, tools/, docs/tools/, schemas/
-Vendor Projection    → .cursor/, .claude/ (via harness generate)
+Installed Engine     → harness/ + adapters/ + content pack
+Project Intent       → .harness/harness.yaml
+Vendor Projection    → .cursor/, .claude/ (self-contained via harness generate)
 ```
+
+Authoring (this repository) still keeps canonical trees at the repo root for
+dogfooding and packaging into `harness/content/_data`.
 
 ## Current repository structure
 
@@ -73,7 +76,7 @@ The standard command is `python -m unittest discover -s tests -q`.
 
 - Only the `software-engineer` Profile is shipped in the content pack. Future Profiles are content additions, not engine features.
 - There is one implemented, experimental Cursor adapter; Claude adapter is also experimental. Codex and other adapters are not implemented.
-- Configuration validation is structural. Semantic resolution occurs in the adapter path rather than as a standalone validation command.
+- Configuration validation is structural plus pack-aware resolution of selected Profile / Rules / Skills / Tools.
 - The Registry currently contains one Tool and has no installation, configuration, package-management, or MCP runtime layer.
 - Detection and Health support declared CLI Tools only. Health uses a minimal declared liveness probe; it does not prove full Tool capability.
 - No effective-risk, authorization, provenance, trust, or persisted runtime observation model exists.

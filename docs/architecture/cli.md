@@ -8,9 +8,9 @@ The CLI is a **thin interface**. It exposes existing Harness capabilities; it do
 
 Provide a small, predictable entrypoint for:
 
-- Initializing Harness project content from the read-only content pack
-- Validating project Harness configuration
-- Generating agent-specific files through adapters
+- Initializing project intent (`.harness/harness.yaml`)
+- Validating project intent against the content pack
+- Generating self-contained agent projections through adapters
 - Inspecting Tool Detection and Health for Registry Tools
 
 It is not a runtime, package manager, plugin host, or orchestration framework.
@@ -22,14 +22,15 @@ harness CLI
      │
      ▼
 Existing Harness APIs
-  (config validation, project discovery)
+  (content pack, config validation, project discovery)
 ```
 
 | Concern | Owner |
 | --- | --- |
 | Schema validation of `harness.yaml` | Shared validator (`harness.config_validation`, also used by `scripts/validate-config.py`) |
-| Profile merge / resource resolution | Adapters via `adapters/common/resolve.py` |
-| Project selection of Profile / lists | `.harness/harness.yaml` |
+| Canonical Profiles / Rules / Skills / Schemas / Tools | Content pack (`harness.content.pack`) |
+| Profile merge / resource resolution | Adapters via `adapters/common/resolve.py` (pack-aware) |
+| Project selection of Profile / lists | `.harness/harness.yaml` (project intent) |
 
 The CLI does not redefine merge rules, schemas, or canonical resource layouts.
 
@@ -44,8 +45,8 @@ Adapter dispatcher (static map)
      ▼
 Existing adapter generator (e.g. Cursor)
      │
-     ├─ resolve
-     ├─ plan / render
+     ├─ resolve (project intent + content pack)
+     ├─ plan / render (self-contained projection)
      ├─ preflight
      └─ apply
 ```
@@ -53,7 +54,7 @@ Existing adapter generator (e.g. Cursor)
 The CLI must not know details of:
 
 - `.mdc` formatting
-- Rule / Skill wrapper content
+- Rule / Skill projection content
 - Managed manifests
 - Conflict markers
 - Adapter-specific output paths
@@ -64,16 +65,16 @@ Those belong to each adapter and to `adapters/common/`.
 
 | Command | Behavior |
 | --- | --- |
-| `harness init` | Materialize Project Content from the read-only content pack into a target directory |
-| `harness validate` | Discover project root; validate `.harness/harness.yaml` against `schemas/harness.schema.json` (syntax only) |
+| `harness init` | Create project intent only (`.harness/harness.yaml`) |
+| `harness validate` | Discover project root; validate intent against content-pack schemas; resolve selected Profile / Rules / Skills / Tools; validate packaged Registry |
 | `harness generate cursor` | Dispatch to the Cursor adapter generator |
 | `harness generate claude` | Dispatch to the Claude adapter generator |
-| `harness tools health <tool>` | Resolve, detect, and health-check one Tool from `tools/registry.yaml` |
+| `harness tools health <tool>` | Resolve from the content-pack Registry, detect, and health-check one Tool |
 | `harness version` | Print **Harness** CLI/package version |
 
 Not implemented (do not document as available):
 
-- `doctor`, `analyze`, `skills`, `rules`, `profile use`, remote profiles, `install`, `adapters`, `config`, `runtime`
+- `doctor`, `analyze`, `skills`, `rules`, `profile use`, remote profiles, `install`, `adapters`, `config`, `runtime`, content export
 
 ### Installation
 
@@ -83,7 +84,7 @@ Distribution name: `ai-engineering-harness`. Import package: `harness`.
 pip install .
 ```
 
-This installs the **Installed Engine** locally, including a read-only content pack used by `harness init`. PyPI publishing and release automation are future work.
+This installs the **Installed Engine** locally, including a read-only content pack. PyPI publishing and release automation are future work.
 
 Console script entrypoint (declared in `pyproject.toml`):
 
@@ -138,9 +139,9 @@ CLI can be invoked without setting `PYTHONPATH` during local development.
 
 | Flag | Commands | Meaning |
 | --- | --- | --- |
-| `--root PATH` | `init` | Target directory for materialization (default: cwd; does not walk upward) |
+| `--root PATH` | `init` | Target directory for intent creation (default: cwd; does not walk upward) |
 | `--root PATH` | `validate`, `generate <adapter>`, `tools health` | Explicit project root; skips upward discovery |
-| `--profile NAME` | `init` | Profile to materialize; required when stdin is non-interactive |
+| `--profile NAME` | `init` | Profile to select; required when stdin is non-interactive |
 | `--dry-run` | `init`, `generate cursor`, `generate claude` | Plan only; no file writes |
 
 ## Exit codes
@@ -164,7 +165,7 @@ Init targets an uninitialized (or already initialized) directory:
 2. Otherwise use the current working directory
 3. Do **not** walk upward looking for an existing `.harness/harness.yaml`
 
-This avoids accidentally materializing into a parent Harness project.
+This avoids accidentally writing into a parent Harness project.
 
 ### Other commands
 
@@ -184,9 +185,7 @@ Exit code `1`.
 
 With `--root PATH`, that directory must contain `.harness/harness.yaml`; otherwise the same not-found message and exit code apply.
 
-The current working directory is never treated as the project root merely because it is cwd; discovery always requires `.harness/harness.yaml` (or an explicit `--root` that contains it).
-
-## Installed Engine vs Project Content vs Vendor Projection
+## Installed Engine vs Project Intent vs Vendor Projection
 
 Keep these layers separate:
 
@@ -196,14 +195,17 @@ Installed Engine
         │
         │  harness init
         ▼
-Project Content
-  .harness/ profiles/ rules/ skills/ tools/ docs/tools/ schemas/
+Project Intent
+  .harness/harness.yaml
         │
         │  harness generate <adapter>
         ▼
-Generated Vendor Projection
+Generated Vendor Projection (self-contained)
   .cursor/  .claude/  (future adapters)
 ```
+
+Canonical Profiles, Rules, Skills, Schemas, Tool Registry, and Tool docs are
+**not** copied into consumer projects. They remain in the content pack.
 
 ### Installed Engine (pip package)
 
@@ -212,31 +214,48 @@ Generated Vendor Projection
 | `harness/` | CLI, project discovery, config validation, Tool Detection / Health, content-pack access |
 | `adapters/` | Cursor and Claude generators plus `adapters/common/` |
 | `adapters/*/adapter.yaml` | Adapter capability metadata (package data) |
-| `harness/content/_data` | Read-only content pack for `harness init` (not mutable global config) |
+| `harness/content/_data` | Read-only content pack (installed distribution) |
 | Runtime deps | `PyYAML`, `jsonschema` |
 
-### Project Content (after `harness init`)
+During **source development** of this repository, the same content is authored at
+the repository root (`profiles/`, `rules/`, `skills/`, `schemas/`, `tools/`,
+`docs/tools/`). The locator prefers the bundled pack when present, otherwise the
+authoring repository root.
+
+### Project Intent (after `harness init`)
 
 | Resource | Role |
 | --- | --- |
 | `.harness/harness.yaml` | Project selection (required for discovery) |
-| `profiles/` | Profile defaults selected by config |
-| `rules/` | Canonical Rules referenced by Profile / config |
-| `skills/` | Canonical Skills referenced by Profile / config |
-| `tools/registry.yaml` | Tool Registry when Tools are used |
-| `docs/tools/` | Human Tool docs referenced by the Registry |
-| `schemas/` | JSON Schemas used by validate / resolve |
 
-After init, the **project** is the source of truth. The installed content pack is not consulted again for day-to-day validate/generate.
+Consumer projects do **not** need:
+
+| Resource | Why absent |
+| --- | --- |
+| `profiles/` | Owned by the content pack |
+| `rules/` | Owned by the content pack; projected into agent config |
+| `skills/` | Owned by the content pack; projected into agent config |
+| `schemas/` | Owned by the content pack |
+| `tools/` | Owned by the content pack |
+| `docs/tools/` | Owned by the content pack |
 
 ### Generated Vendor Projection
 
 | Resource | Role |
 | --- | --- |
-| `.cursor/` | Cursor adapter output (`harness generate cursor`) |
-| `.claude/` | Claude adapter output (`harness generate claude`) |
+| `.cursor/` | Cursor adapter output (`harness generate cursor`) — self-contained |
+| `.claude/` | Claude adapter output (`harness generate claude`) — self-contained |
 
-`harness init` does **not** create vendor projections and does not modify `CLAUDE.md`, `AGENTS.md`, `src/`, or other user project files outside the Harness content areas above.
+`harness init` does **not** create vendor projections and does not modify
+`CLAUDE.md`, `AGENTS.md`, `src/`, or other user project files.
+
+After upgrading the Harness package, regenerate agent projections so they pick up
+updated canonical content:
+
+```bash
+harness generate cursor
+harness generate claude
+```
 
 ## `harness init` contract
 
@@ -251,14 +270,16 @@ Behavior:
 
 1. Resolve target root (`--root` or cwd)
 2. Resolve profile (`--profile`, or interactive prompt when stdin is a TTY)
-3. Build a selective file map for that Profile and its dependencies
-4. Classify each path: create / unchanged / conflict
+3. Build an intent-only file map (`.harness/harness.yaml`)
+4. Classify: create / unchanged / conflict
 5. Fail-closed on conflicts (no writes)
-6. Write only missing files when the plan is clean
+6. Write only the missing intent file when the plan is clean
 
-Idempotency: running the same init twice is safe when existing files are byte-identical. Divergent files are conflicts.
+Idempotency: running the same init twice is safe when existing intent is
+byte-identical. Divergent `.harness/harness.yaml` is a conflict.
 
-Currently shipped Profile: `software-engineer`. Future Profiles are content additions inside the pack, not engine features.
+Currently shipped Profile: `software-engineer`. Future Profiles are content
+additions inside the pack, not engine features.
 
 ## Adapter dispatch
 
@@ -292,7 +313,8 @@ Do not conflate these.
 
 Generation output is owned by the adapter (Created / Updated / Unchanged / Conflicts / Warnings / Errors). The CLI presents that output without a second formatting system.
 
-Init output uses the same create / unchanged / conflict vocabulary for content-pack materialization (no silent updates of divergent files).
+Init output uses the same create / unchanged / conflict vocabulary for intent
+materialization (no silent updates of divergent files).
 
 Validate success / failure messages match the shared validator:
 
@@ -304,6 +326,16 @@ Validate success / failure messages match the shared validator:
 exit code `1` covers unhealthy, unavailable, unsupported, timeout, error, missing
 Tool, or missing project/registry.
 
+## Migration (older consumer projects)
+
+Projects created by the previous `harness init` may contain materialized
+`profiles/`, `rules/`, `skills/`, `schemas/`, `tools/`, and `docs/` trees.
+
+- Those trees are **not** deleted automatically
+- Resolution and validation prefer the **content pack**, not project-local copies
+- Safe migration: keep `.harness/harness.yaml`, regenerate agent projections, then
+  optionally remove unused materialized trees by hand after review
+
 ## Extensibility (future)
 
 Logical next steps (not implemented here):
@@ -311,6 +343,7 @@ Logical next steps (not implemented here):
 - Additional Profiles as content-pack additions
 - PyPI publishing / release automation
 - Additional `generate <adapter>` entries when new adapters land
+- Content version pinning / project overrides / Tool content packs
 - Further commands only when they wrap real Harness capabilities
 
 Prefer keeping the CLI thin. New behavior should land in core/adapters/content first, then be exposed by the CLI.

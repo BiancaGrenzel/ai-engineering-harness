@@ -54,10 +54,13 @@
 
 ### Changed
 
-- Document Installed Engine vs Project Content vs Generated Vendor Projection
-- Document `harness init` as the bootstrap path for external projects
+- Content Pack / Consumer Project architecture: package-owned canonical content + project intent + self-contained projections
+- `harness init` creates only `.harness/harness.yaml` (no project-local profiles/rules/skills/schemas/tools/docs)
+- `resolve_harness`, `harness validate`, and `harness tools health` read canonical content from the content pack
+- Cursor Rules are self-contained `.mdc` bodies (no `@rules/` wrappers)
+- Claude Skills are self-contained (no project-local `skills/` dependency)
+- Document Installed Engine vs Content Pack vs Project Intent vs Generated Vendor Projection
 - Document installed (`harness`) vs development (`python -m harness`) invocation
-- Document engine vs project-local resource model (Profiles / Rules / Skills / schemas stay project-local after init)
 - Cursor adapter conflicts are **fail-closed** (preflight before any writes)
 - Cursor Rules default to `alwaysApply: false` with description (Apply Intelligently)
 - `adapter.yaml` is loaded and validated; capabilities must match generator behavior

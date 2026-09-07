@@ -22,30 +22,35 @@ This is not a giant prompt collection. It is a structured harness based on Conte
 
 ## Architecture
 
-Canonical layout:
+Canonical **authoring** layout (this repository):
 
 ```text
-rules/       # persistent agent behavior (canonical)
-skills/      # specialized procedures (canonical)
+rules/       # persistent agent behavior (canonical authoring)
+skills/      # specialized procedures (canonical authoring)
 docs/        # documentation (includes human Tool catalog docs)
-profiles/    # role-specific compositions
-.harness/    # project harness configuration
-schemas/     # JSON Schemas for configuration
+profiles/    # role-specific compositions (canonical authoring)
+.harness/    # project harness configuration (intent)
+schemas/     # JSON Schemas for configuration (canonical authoring)
 scripts/     # small development utilities
-adapters/    # agent compatibility layer (Cursor first)
-harness/     # thin CLI (init, validate, generate, tools health)
-tools/       # Tool Registry (+ planned installers/wrappers)
+adapters/    # agent compatibility layer
+harness/     # thin CLI + content pack locator
+tools/       # Tool Registry (canonical authoring)
 ```
 
-Provider-specific output (for example `.cursor/`) is produced by adapters. Canonical resources stay vendor-neutral.
+Provider-specific output (for example `.cursor/`) is produced by adapters.
+Canonical resources stay vendor-neutral in the content pack.
 
-### Installed Engine vs Project Content vs Vendor Projection
+### Installed Engine vs Project Intent vs Vendor Projection
 
 | Layer | How it appears | Role |
 | --- | --- | --- |
-| **Installed Engine** | `pip install .` → `harness` + `adapters` (+ read-only content pack) | CLI, resolution, generation, detection, health |
-| **Project Content** | `harness init` → `.harness/`, `profiles/`, `rules/`, `skills/`, `tools/`, `docs/tools/`, `schemas/` | Versionable project source of truth |
-| **Vendor Projection** | `harness generate cursor\|claude` → `.cursor/`, `.claude/` | Agent-specific generated files |
+| **Installed Engine** | `pip install .` → `harness` + `adapters` + content pack | CLI, resolution, generation, detection, health |
+| **Content pack** | `harness/content/_data` (installed) or repo root (source) | Canonical Profiles, Rules, Skills, Schemas, Tools |
+| **Project Intent** | `harness init` → `.harness/harness.yaml` | Profile selection and optional list overrides |
+| **Vendor Projection** | `harness generate cursor\|claude` → `.cursor/`, `.claude/` | Self-contained agent-specific generated files |
+
+Consumer projects do **not** need root-level `profiles/`, `rules/`, `skills/`,
+`schemas/`, `tools/`, or `docs/` just to use the Harness.
 
 ### Rules, Skills, Tools, Profiles, Configuration
 
@@ -122,17 +127,26 @@ python -m harness version
 
 ### Engine vs project resources
 
-`pip install` installs the **Installed Engine** (Python packages `harness` and `adapters`, plus a read-only content pack). `harness init` copies the selected Profile and dependencies into the target project as **Project Content**. `harness generate` creates **Vendor Projection** files. See [`docs/architecture/cli.md`](docs/architecture/cli.md#installed-engine-vs-project-content-vs-vendor-projection).
+`pip install` installs the **Installed Engine** (Python packages `harness` and
+`adapters`, plus a read-only content pack). `harness init` writes **Project
+Intent** only (`.harness/harness.yaml`). `harness generate` creates
+**self-contained Vendor Projection** files. See
+[`docs/architecture/cli.md`](docs/architecture/cli.md#installed-engine-vs-project-intent-vs-vendor-projection).
 
 Typical external-project flow:
 
 ```bash
-pip install .
-mkdir my-project && cd my-project
+pip install ai-engineering-harness   # or: pip install .
+cd my-project
 harness init --profile software-engineer
 harness validate
-harness generate cursor --dry-run
+harness generate cursor
+# or:
+harness generate claude
 ```
+
+After upgrading the Harness package, regenerate projections so agents pick up
+updated canonical Rules and Skills.
 
 Validate configuration:
 
@@ -219,7 +233,7 @@ The Cursor and Claude adapters are experimental. Additional agent adapters are n
 | Initial CLI (`validate`, `generate`, `tools health`) | Done | Thin interface over existing APIs |
 | Local packaging (`pip install .` → `harness`) | Done | Installable engine + read-only content pack |
 | Tool Registry + Detection + Health | Done | Declarative catalog; read-only local probes |
-| Profile / project scaffolding (`harness init`) | Done | Bootstrap Project Content for external projects |
+| Profile / project scaffolding (`harness init`) | Done | Project intent only (`.harness/harness.yaml`) |
 | Runtime Tool installers / wrappers | Not implemented | Install, configure, or package Tools |
 | PyPI publishing / release automation | Not implemented | Public distribution beyond local install |
 | Additional Profiles (security, …) | Not implemented | Content-pack additions |
