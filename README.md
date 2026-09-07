@@ -63,13 +63,65 @@ Project configuration is declarative and lives in [`.harness/harness.yaml`](.har
 
 Contract: [`docs/architecture/configuration.md`](docs/architecture/configuration.md)
 
+## CLI
+
+Thin interface over existing Harness validation and adapters. Architecture: [`docs/architecture/cli.md`](docs/architecture/cli.md).
+
+### Install (local)
+
+The distribution name is `ai-engineering-harness`. The import package remains `harness`.
+
+```bash
+pip install .
+# or, from a checkout / wheel once published:
+# pip install ai-engineering-harness
+```
+
+PyPI publishing and release automation are **not** set up yet. The package is installable locally today.
+
+### Installed invocation
+
+After install, the `harness` console script is available without `PYTHONPATH`:
+
+```bash
+harness --help
+harness version
+harness validate
+harness generate cursor --dry-run
+harness generate cursor
+harness generate claude --dry-run
+harness generate claude
+harness tools health rtk
+```
+
+### Development invocation
+
+From a repository checkout (package on `PYTHONPATH` or after editable install):
+
+```bash
+python -m harness --help
+python -m harness validate
+python -m harness generate cursor --dry-run
+python -m harness generate claude --dry-run
+python -m harness tools health rtk
+python -m harness version
+```
+
+`python -m harness` and `harness` share the same `harness.cli:main` entrypoint.
+
+### Engine vs project resources
+
+`pip install` installs the **engine** (Python packages `harness` and `adapters`, including adapter metadata). Canonical Profiles, Rules, Skills, Tool Registry, schemas, and docs remain **project-local** under a Harness-enabled project (alongside `.harness/harness.yaml`). See [`docs/architecture/cli.md`](docs/architecture/cli.md#installed-engine-vs-project-resources).
+
 Validate configuration:
 
 ```bash
-pip install -r scripts/requirements.txt
-python -m harness validate
-# equivalent script:
-python scripts/validate-config.py
+pip install .
+harness validate
+# equivalent without packaging:
+# pip install -r scripts/requirements.txt
+# python -m harness validate
+# python scripts/validate-config.py
 ```
 
 Tests:
@@ -77,21 +129,6 @@ Tests:
 ```bash
 python -m unittest discover -s tests -v
 ```
-
-## CLI
-
-Thin interface over existing Harness validation and adapters. Architecture: [`docs/architecture/cli.md`](docs/architecture/cli.md).
-
-```bash
-python -m harness --help
-python -m harness validate
-python -m harness generate cursor --dry-run
-python -m harness generate cursor
-python -m harness tools health rtk
-python -m harness version
-```
-
-Run `python -m harness` from the project root (or set `PYTHONPATH` to that root). A console-script `harness` entrypoint is not packaged yet; for a path-bootstrapped launcher in this repo: `python scripts/harness validate`.
 
 ## Principles
 
@@ -159,8 +196,11 @@ The Cursor and Claude adapters are experimental. Additional agent adapters are n
 | Adapter architecture + Cursor adapter | Done (experimental) | Harness → agent projection |
 | Claude adapter | Done (experimental) | Harness → `.claude/` projection |
 | Initial CLI (`validate`, `generate`, `tools health`) | Done | Thin interface over existing APIs |
+| Local packaging (`pip install .` → `harness`) | Done | Installable engine; project resources stay project-local |
 | Tool Registry + Detection + Health | Done | Declarative catalog; read-only local probes |
 | Runtime Tool installers / wrappers | Not implemented | Install, configure, or package Tools |
+| Profile / project scaffolding (`harness init`) | Not implemented | Bootstrap a Harness-enabled project |
+| PyPI publishing / release automation | Not implemented | Public distribution beyond local install |
 | Additional agent adapters (Codex, …) | Not implemented | More vendor projections |
 | `harness doctor` / more CLI commands | Not implemented | Operational tooling |
 | MCP, RTK wiring, RAG, observability runtime | Not implemented | External capability wiring |

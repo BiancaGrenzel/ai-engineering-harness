@@ -78,6 +78,11 @@ This is an index, not a replacement for architecture documents or ADRs.
 **Status:** Accepted.  
 **Reference:** `docs/architecture/cli.md`, `harness/cli.py`.
 
+**Decision:** Packaging installs the engine (`harness` + `adapters`) while Profiles, Rules, Skills, Tool Registry, schemas, and docs remain project-local.
+**Reason:** Avoid shipping canonical project content as global mutable package state; keep engine/project separation clear before `harness init` / distribution exists.
+**Status:** Accepted for packaging v1; project scaffolding is future work.
+**Reference:** `pyproject.toml`, `docs/architecture/cli.md`.
+
 ## Runtime
 
 **Decision:** Detection and Health observations are transient and are never written back to configuration or the Registry.  

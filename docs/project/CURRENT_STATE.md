@@ -15,6 +15,7 @@ Snapshot based on the repository working tree on 2026-09-07. Status reflects obs
 | Cursor adapter | Experimental | Generates a Cursor projection from canonical configuration with fail-closed conflict handling. |
 | Claude adapter | Experimental | Generates a Claude Code projection (`.claude/rules`, `.claude/skills`) without managing `CLAUDE.md`. |
 | CLI | Implemented | Thin `validate`, `generate cursor|claude`, `tools health`, and `version` interface. |
+| Packaging | Implemented | Local `pip install .` exposes `harness` console script; Profiles/Rules/Skills/schemas remain project-local. |
 | Security Profiles | Planned | No security-specific Profile exists; security is currently a selected Rule category. |
 
 ## Commands
@@ -23,6 +24,9 @@ Run from the repository root:
 
 ```text
 python scripts/validate-config.py
+pip install .
+harness version
+harness validate
 python -m harness validate
 python -m harness generate cursor --dry-run
 python -m harness generate cursor
@@ -53,15 +57,17 @@ tools/          declarative Tool Registry
 
 ## Current tests
 
-The standard command is `python -m unittest discover -s tests -q`. At this snapshot it ran 122 tests successfully after Health checking landed.
+The standard command is `python -m unittest discover -s tests -q`. At this snapshot it ran 186 tests successfully after packaging landed.
 
 ## Known limitations
 
-- There is one implemented, experimental Cursor adapter; no Claude, Codex, or other adapter generator exists.
+- Packaging installs the engine only. A project outside this repository still needs its own Profiles, Rules, Skills, Tool Registry, schemas, and docs; there is no `harness init` yet.
+- There is one implemented, experimental Cursor adapter; Claude adapter is also experimental. Codex and other adapters are not implemented.
 - Configuration validation is structural. Semantic resolution occurs in the adapter path rather than as a standalone validation command.
 - The Registry currently contains one Tool and has no installation, configuration, package-management, or MCP runtime layer.
 - Detection and Health support declared CLI Tools only. Health uses a minimal declared liveness probe; it does not prove full Tool capability.
 - No effective-risk, authorization, provenance, trust, or persisted runtime observation model exists.
+- PyPI publishing and release automation are not implemented.
 
 ## Current risks
 

@@ -14,6 +14,7 @@ This is a direction map derived from the current repository, not a delivery comm
 
 ## Next
 
+- Design `harness init` (or equivalent) to scaffold a Harness-enabled project with schemas / minimal Profile / Rules / Skills outside this repository.
 - Reconcile top-level README wording with the committed Tool runtime state where it still understates existing layers.
 - Optional CLAUDE.md management policy only if an explicit, fail-closed product decision is accepted.
 - Add another adapter only when there is a verified target format and a need. It depends on preserving the canonical-content boundary and is optional per vendor.

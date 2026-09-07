@@ -4,6 +4,9 @@
 
 ### Added
 
+- Local installable packaging via `pyproject.toml` (`pip install .`)
+- Console script entrypoint: `harness = harness.cli:main`
+- Packaging / installed-CLI smoke tests (`tests/test_packaging.py`)
 - Claude Code adapter (`adapters/claude/`) projecting Rules/Skills into `.claude/`
 - `generate claude` CLI dispatch (`python -m harness generate claude`)
 - Claude adapter tests and fixtures under `tests/adapters/claude/`
@@ -46,6 +49,8 @@
 
 ### Changed
 
+- Document installed (`harness`) vs development (`python -m harness`) invocation
+- Document engine vs project-local resource model (Profiles / Rules / Skills / schemas stay project-local)
 - Cursor adapter conflicts are **fail-closed** (preflight before any writes)
 - Cursor Rules default to `alwaysApply: false` with description (Apply Intelligently)
 - `adapter.yaml` is loaded and validated; capabilities must match generator behavior
