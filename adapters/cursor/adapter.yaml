@@ -1,0 +1,33 @@
+# Cursor adapter metadata (loaded and validated by the generator).
+# Contract: adapters/ARCHITECTURE.md
+#
+# version = adapter implementation version (not Harness config version, not Tool version).
+
+name: cursor
+agent: cursor
+version: 1
+status: experimental
+
+supported_capabilities:
+  - rules
+  - skills
+
+unsupported_capabilities:
+  - tools
+
+input:
+  - .harness/harness.yaml
+  - profiles/
+  - rules/
+  - skills/
+  - docs/tools/
+
+output:
+  rules_dir: .cursor/rules/harness
+  skills_dir: .cursor/skills/harness
+  managed_manifest: .harness/adapters/cursor.managed.json
+
+notes:
+  - Tools selected in harness.yaml are resolved and reported but not projected into Cursor-native config.
+  - Generation prefers thin wrappers that reference canonical files.
+  - "Rules default to alwaysApply: false with description (Apply Intelligently)."
