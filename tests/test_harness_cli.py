@@ -163,9 +163,9 @@ class HarnessCliTests(unittest.TestCase):
             self.assertEqual(found, root.resolve())
 
     def test_unknown_adapter(self) -> None:
-        result = _run_module("generate", "claude")
+        result = _run_module("generate", "gemini")
         self.assertEqual(result.returncode, 1)
-        self.assertIn("Unknown or unsupported adapter: claude", result.stderr)
+        self.assertIn("Unknown or unsupported adapter: gemini", result.stderr)
 
     def test_generate_cursor_dry_run(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -203,6 +203,62 @@ class HarnessCliTests(unittest.TestCase):
             self.assertTrue(manifest.is_file())
             data = json.loads(manifest.read_text(encoding="utf-8"))
             self.assertEqual(data["adapter"], "cursor")
+
+    def test_generate_claude_dry_run(self) -> None:
+        claude_fixture = (
+            Path(__file__).resolve().parent / "adapters" / "claude" / "fixtures" / "project"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "project"
+            shutil.copytree(claude_fixture, root)
+            shutil.copytree(CANONICAL_SCHEMAS, root / "schemas")
+            result = _run_module(
+                "generate", "claude", "--root", str(root), "--dry-run"
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Dry-run", result.stdout)
+            self.assertFalse((root / ".claude").exists())
+
+    def test_generate_claude_with_root(self) -> None:
+        claude_fixture = (
+            Path(__file__).resolve().parent / "adapters" / "claude" / "fixtures" / "project"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "project"
+            shutil.copytree(claude_fixture, root)
+            shutil.copytree(CANONICAL_SCHEMAS, root / "schemas")
+            result = _run_module("generate", "claude", "--root", str(root))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(
+                (root / ".claude" / "rules" / "harness" / "core--core.md").is_file()
+            )
+            self.assertTrue(
+                (root / ".claude" / "skills" / "task-analysis" / "SKILL.md").is_file()
+            )
+            manifest = root / ".harness" / "adapters" / "claude.managed.json"
+            self.assertTrue(manifest.is_file())
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertEqual(data["adapter"], "claude")
+
+    def test_cli_dispatches_to_claude_adapter(self) -> None:
+        """CLI must call the Claude adapter run(); it must not reimplement generation."""
+        fake_root = Path(tempfile.mkdtemp())
+        try:
+            (fake_root / ".harness").mkdir()
+            (fake_root / ".harness" / "harness.yaml").write_text(
+                "version: 1\nprofile: software-engineer\n",
+                encoding="utf-8",
+            )
+            with mock.patch(
+                "adapters.claude.generate.run", return_value=0
+            ) as run_mock:
+                code = harness_cli.main(
+                    ["generate", "claude", "--root", str(fake_root), "--dry-run"]
+                )
+            self.assertEqual(code, 0)
+            run_mock.assert_called_once_with(fake_root.resolve(), dry_run=True)
+        finally:
+            shutil.rmtree(fake_root, ignore_errors=True)
 
     def test_cli_dispatches_to_existing_adapter(self) -> None:
         """CLI must call the Cursor adapter run(); it must not reimplement generation."""

@@ -21,9 +21,20 @@ def _run_cursor(root: Path, *, dry_run: bool) -> int:
     return cursor_generate.run(root, dry_run=dry_run)
 
 
+def _run_claude(root: Path, *, dry_run: bool) -> int:
+    """Dispatch to the existing Claude adapter generator."""
+    try:
+        from adapters.claude import generate as claude_generate
+    except ImportError as exc:  # pragma: no cover - environment guard
+        print(f"Claude adapter is unavailable.\n\n{exc}", file=sys.stderr)
+        return 1
+    return claude_generate.run(root, dry_run=dry_run)
+
+
 # Static map only. Add future adapters here when implemented.
 ADAPTERS: dict[str, Callable[..., int]] = {
     "cursor": _run_cursor,
+    "claude": _run_claude,
 }
 
 
