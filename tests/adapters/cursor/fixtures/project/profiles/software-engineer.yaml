@@ -1,0 +1,11 @@
+name: software-engineer
+description: Fixture profile for Cursor adapter tests.
+
+rules:
+  - core
+
+skills:
+  - task-analysis
+
+tools:
+  - rtk

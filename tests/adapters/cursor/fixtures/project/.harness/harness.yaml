@@ -1,0 +1,11 @@
+version: 1
+profile: software-engineer
+
+rules:
+  - core
+
+skills:
+  - task-analysis
+
+tools:
+  - rtk
