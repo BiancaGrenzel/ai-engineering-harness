@@ -3,6 +3,10 @@
 
 Treats configuration content as data. Does not execute Rules, Skills, Tools,
 or Profile content.
+
+Project intent comes from ``<project>/.harness/harness.yaml``.
+Canonical Profiles, Rules, Skills, Schemas, and Tools come from the installed
+(or source) content pack via ``harness.content.pack``.
 """
 
 from __future__ import annotations
@@ -28,9 +32,10 @@ MANAGED_MARKER = "<!-- ai-engineering-harness:managed -->"
 
 @dataclass(frozen=True)
 class ResolvedHarness:
-    """Effective configuration after Profile merge and path resolution."""
+    """Effective configuration after Profile merge and pack path resolution."""
 
     root: Path
+    content_root: Path
     version: int
     profile: str
     rule_ids: list[str]
@@ -109,35 +114,35 @@ def merge_lists(profile_data: dict[str, Any], harness_data: dict[str, Any], key:
     return list(profile_data.get(key) or [])
 
 
-def find_skill_file(root: Path, skill_id: str) -> Path | None:
-    skills_root = root / "skills"
+def pack_rel(path: Path, content_root: Path) -> str:
+    """Return a pack-relative POSIX path (logical id, not a project filesystem path)."""
+    return path.resolve().relative_to(content_root.resolve()).as_posix()
+
+
+def find_skill_file(content_root: Path, skill_id: str) -> Path | None:
+    skills_root = content_root / "skills"
     if not skills_root.is_dir():
         return None
     matches = sorted(skills_root.glob(f"**/{skill_id}/SKILL.md"))
-    # Prefer category/skill layout; ignore template-only paths.
     matches = [path for path in matches if path.is_file()]
     if not matches:
         return None
     if len(matches) > 1:
         raise ResolutionError(
             f"Skill '{skill_id}' resolves ambiguously: "
-            + ", ".join(str(path.relative_to(root)) for path in matches)
+            + ", ".join(pack_rel(path, content_root) for path in matches)
         )
     return matches[0]
 
 
-def load_registry_tools_by_id(root: Path) -> dict[str, dict[str, Any]]:
-    """Load Tool definitions keyed by id from ``tools/registry.yaml``.
-
-    The Registry is the operational identity source. Documentation under
-    ``docs/tools/`` is referenced via each Tool's ``documentation`` field.
-    """
-    registry_path = root / "tools" / "registry.yaml"
-    if not registry_path.is_file():
+def load_registry_tools_by_id(content_root: Path) -> dict[str, dict[str, Any]]:
+    """Load Tool definitions keyed by id from the content-pack Registry."""
+    registry_file = content_root / "tools" / "registry.yaml"
+    if not registry_file.is_file():
         raise ResolutionError(
-            f"Tool Registry not found: {registry_path.relative_to(root)}"
+            "Tool Registry not found in content pack: tools/registry.yaml"
         )
-    data = load_yaml(registry_path)
+    data = load_yaml(registry_file)
     if not isinstance(data, dict):
         raise ResolutionError("Tool Registry root must be a mapping")
     tools = data.get("tools")
@@ -158,11 +163,11 @@ def load_registry_tools_by_id(root: Path) -> dict[str, dict[str, Any]]:
     return by_id
 
 
-def resolve_rule_files(root: Path, rule_ids: list[str]) -> list[Path]:
+def resolve_rule_files(content_root: Path, rule_ids: list[str]) -> list[Path]:
     files: list[Path] = []
     missing: list[str] = []
     for rule_id in rule_ids:
-        category = root / "rules" / rule_id
+        category = content_root / "rules" / rule_id
         if not category.is_dir():
             missing.append(rule_id)
             continue
@@ -177,35 +182,33 @@ def resolve_rule_files(root: Path, rule_ids: list[str]) -> list[Path]:
         files.extend(rule_md)
     if missing:
         raise ResolutionError(
-            "Missing or empty Rule categories: " + ", ".join(missing)
+            "Missing or empty Rule categories in content pack: " + ", ".join(missing)
         )
     return files
 
 
-def resolve_skill_files(root: Path, skill_ids: list[str]) -> list[Path]:
+def resolve_skill_files(content_root: Path, skill_ids: list[str]) -> list[Path]:
     files: list[Path] = []
     missing: list[str] = []
     for skill_id in skill_ids:
-        path = find_skill_file(root, skill_id)
+        path = find_skill_file(content_root, skill_id)
         if path is None:
             missing.append(skill_id)
             continue
         files.append(path)
     if missing:
-        raise ResolutionError("Missing Skills: " + ", ".join(missing))
+        raise ResolutionError(
+            "Missing Skills in content pack: " + ", ".join(missing)
+        )
     return files
 
 
-def resolve_tool_files(root: Path, tool_ids: list[str]) -> list[Path]:
-    """Resolve selected Tool ids via the Registry, then to documentation paths.
-
-    Identity: ``tools/registry.yaml`` (required when any Tool is selected).
-    Documentation: each entry's ``documentation`` path under the project root.
-    """
+def resolve_tool_files(content_root: Path, tool_ids: list[str]) -> list[Path]:
+    """Resolve selected Tool ids via the pack Registry, then to documentation paths."""
     if not tool_ids:
         return []
 
-    by_id = load_registry_tools_by_id(root)
+    by_id = load_registry_tools_by_id(content_root)
     files: list[Path] = []
     missing: list[str] = []
     for tool_id in tool_ids:
@@ -219,33 +222,50 @@ def resolve_tool_files(root: Path, tool_ids: list[str]) -> list[Path]:
                 f"Tool '{tool_id}' is missing a documentation path in the Registry"
             )
         doc_rel = documentation.strip().replace("\\", "/")
-        doc_path = root / doc_rel
+        doc_path = content_root / doc_rel
         if not doc_path.is_file():
             raise ResolutionError(
-                f"Tool '{tool_id}' documentation not found: {doc_rel}"
+                f"Tool '{tool_id}' documentation not found in content pack: {doc_rel}"
             )
         files.append(doc_path)
     if missing:
         raise ResolutionError(
-            "Unknown Tool id(s) in Registry: " + ", ".join(missing)
+            "Unknown Tool id(s) in content pack Registry: " + ", ".join(missing)
         )
     return files
 
 
 def resolve_harness(root: Path) -> ResolvedHarness:
-    """Load, validate, merge, and resolve harness configuration under root."""
+    """Load project intent, merge Profile defaults, resolve from the content pack."""
     require_deps()
     root = root.resolve()
+
+    try:
+        from harness.content.pack import ContentPackError, content_pack_root
+    except ImportError as exc:  # pragma: no cover
+        raise ResolutionError(
+            "Unable to import harness.content.pack for content resolution"
+        ) from exc
+
+    try:
+        content_root = content_pack_root()
+    except ContentPackError as exc:
+        raise ResolutionError(str(exc)) from exc
+
     config_path = root / ".harness" / "harness.yaml"
-    harness_schema = root / "schemas" / "harness.schema.json"
-    profile_schema = root / "schemas" / "profile.schema.json"
+    harness_schema = content_root / "schemas" / "harness.schema.json"
+    profile_schema = content_root / "schemas" / "profile.schema.json"
 
     if not config_path.is_file():
         raise ResolutionError(f"Config not found: {config_path}")
     if not harness_schema.is_file():
-        raise ResolutionError(f"Schema not found: {harness_schema}")
+        raise ResolutionError(
+            "Schema not found in content pack: schemas/harness.schema.json"
+        )
     if not profile_schema.is_file():
-        raise ResolutionError(f"Schema not found: {profile_schema}")
+        raise ResolutionError(
+            "Schema not found in content pack: schemas/profile.schema.json"
+        )
 
     harness_data = load_yaml(config_path)
     if not isinstance(harness_data, dict):
@@ -258,9 +278,11 @@ def resolve_harness(root: Path) -> ResolvedHarness:
         )
 
     profile_name = harness_data["profile"]
-    profile_path = root / "profiles" / f"{profile_name}.yaml"
+    profile_path = content_root / "profiles" / f"{profile_name}.yaml"
     if not profile_path.is_file():
-        raise ResolutionError(f"Profile not found: {profile_path.relative_to(root)}")
+        raise ResolutionError(
+            f"Profile not found in content pack: profiles/{profile_name}.yaml"
+        )
 
     profile_data = load_yaml(profile_path)
     if not isinstance(profile_data, dict):
@@ -286,14 +308,15 @@ def resolve_harness(root: Path) -> ResolvedHarness:
 
     return ResolvedHarness(
         root=root,
+        content_root=content_root,
         version=int(harness_data["version"]),
         profile=profile_name,
         rule_ids=rule_ids,
         skill_ids=skill_ids,
         tool_ids=tool_ids,
-        rule_files=resolve_rule_files(root, rule_ids),
-        skill_files=resolve_skill_files(root, skill_ids),
-        tool_files=resolve_tool_files(root, tool_ids),
+        rule_files=resolve_rule_files(content_root, rule_ids),
+        skill_files=resolve_skill_files(content_root, skill_ids),
+        tool_files=resolve_tool_files(content_root, tool_ids),
     )
 
 

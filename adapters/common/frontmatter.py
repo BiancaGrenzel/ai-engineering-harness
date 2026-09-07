@@ -34,3 +34,11 @@ def parse_skill_frontmatter(text: str) -> dict[str, str]:
         if isinstance(value, str) and value.strip():
             result[key] = value.strip()
     return result
+
+
+def skill_body_after_frontmatter(text: str) -> str:
+    """Return Skill markdown body after YAML frontmatter (if any)."""
+    match = FRONTMATTER_RE.match(text)
+    if not match:
+        return text
+    return text[match.end() :]
