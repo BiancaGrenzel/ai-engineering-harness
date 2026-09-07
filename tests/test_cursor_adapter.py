@@ -122,7 +122,10 @@ class CursorAdapterTests(unittest.TestCase):
             "skills:\n  - task-analysis\ntools:\n  - rtk\n",
         )
         resolved = resolve_harness(self.root)
-        self.assertEqual(resolved.rule_ids, ["core"])
+        self.assertEqual(
+            resolved.rule_ids,
+            ["core", "context", "security", "quality", "production"],
+        )
 
     def test_skills_inherit_from_profile(self) -> None:
         _write_harness(
@@ -131,7 +134,17 @@ class CursorAdapterTests(unittest.TestCase):
             "rules:\n  - core\ntools:\n  - rtk\n",
         )
         resolved = resolve_harness(self.root)
-        self.assertEqual(resolved.skill_ids, ["task-analysis"])
+        self.assertEqual(
+            resolved.skill_ids,
+            [
+                "task-analysis",
+                "planning",
+                "context-engineering",
+                "research",
+                "verification",
+                "token-optimization",
+            ],
+        )
 
     def test_tools_inherit_from_profile(self) -> None:
         _write_harness(
@@ -143,9 +156,6 @@ class CursorAdapterTests(unittest.TestCase):
         self.assertEqual(resolved.tool_ids, ["rtk"])
 
     def test_explicit_rules_replace_profile_rules(self) -> None:
-        security_dir = self.root / "rules" / "security"
-        security_dir.mkdir(parents=True)
-        (security_dir / "security.md").write_text("# security fixture\n", encoding="utf-8")
         _write_harness(
             self.root,
             "version: 1\nprofile: software-engineer\n"
@@ -155,14 +165,9 @@ class CursorAdapterTests(unittest.TestCase):
         resolved = resolve_harness(self.root)
         self.assertEqual(resolved.rule_ids, ["security"])
         self.assertFalse(any(path.name == "core.md" for path in resolved.rule_files))
+        self.assertTrue(any(path.name == "security.md" for path in resolved.rule_files))
 
     def test_explicit_skills_replace_profile_skills(self) -> None:
-        skill_dir = self.root / "skills" / "core" / "verification"
-        skill_dir.mkdir(parents=True)
-        (skill_dir / "SKILL.md").write_text(
-            "---\nname: verification\ndescription: fixture\n---\n\n# v\n",
-            encoding="utf-8",
-        )
         _write_harness(
             self.root,
             "version: 1\nprofile: software-engineer\n"
@@ -173,32 +178,15 @@ class CursorAdapterTests(unittest.TestCase):
         self.assertEqual(resolved.skill_ids, ["verification"])
 
     def test_explicit_tools_replace_profile_tools(self) -> None:
-        tool_path = self.root / "docs" / "tools" / "token" / "other-tool.md"
-        tool_path.write_text("# other tool\n", encoding="utf-8")
-        registry_path = self.root / "tools" / "registry.yaml"
-        registry_path.write_text(
-            "version: 1\ntools:\n"
-            "  - id: other-tool\n"
-            "    name: Other Tool\n"
-            "    description: Fixture replacement Tool.\n"
-            "    kind: cli\n"
-            "    documentation: docs/tools/token/other-tool.md\n"
-            "    capabilities: []\n"
-            "    detection:\n"
-            "      executable: other-tool\n"
-            "      version_arguments: [--version]\n"
-            "    security:\n"
-            "      baseline_risk: low\n",
-            encoding="utf-8",
-        )
         _write_harness(
             self.root,
             "version: 1\nprofile: software-engineer\n"
             "rules:\n  - core\nskills:\n  - task-analysis\n"
-            "tools:\n  - other-tool\n",
+            "tools: []\n",
         )
         resolved = resolve_harness(self.root)
-        self.assertEqual(resolved.tool_ids, ["other-tool"])
+        self.assertEqual(resolved.tool_ids, [])
+        self.assertEqual(resolved.tool_files, [])
 
     def test_unknown_tool_id_not_in_registry(self) -> None:
         _write_harness(
@@ -214,6 +202,7 @@ class CursorAdapterTests(unittest.TestCase):
     def test_tool_doc_without_registry_entry_is_not_enough(self) -> None:
         """docs/tools alone must not satisfy Tool identity."""
         orphan = self.root / "docs" / "tools" / "token" / "orphan-only.md"
+        orphan.parent.mkdir(parents=True, exist_ok=True)
         orphan.write_text("# orphan\n", encoding="utf-8")
         _write_harness(
             self.root,
@@ -224,11 +213,14 @@ class CursorAdapterTests(unittest.TestCase):
         with self.assertRaises(ResolutionError):
             resolve_harness(self.root)
 
-    def test_missing_registry_when_tools_selected(self) -> None:
-        (self.root / "tools" / "registry.yaml").unlink()
-        with self.assertRaises(ResolutionError) as ctx:
-            resolve_harness(self.root)
-        self.assertIn("Tool Registry not found", str(ctx.exception))
+    def test_project_local_registry_is_not_required(self) -> None:
+        """Consumer projects resolve Tools from the content pack Registry."""
+        project_registry = self.root / "tools" / "registry.yaml"
+        if project_registry.is_file():
+            project_registry.unlink()
+        resolved = resolve_harness(self.root)
+        self.assertEqual(resolved.tool_ids, ["rtk"])
+        self.assertTrue(resolved.tool_files)
 
     # --- Adapter metadata ---
 
@@ -288,12 +280,14 @@ class CursorAdapterTests(unittest.TestCase):
         self.assertTrue(manifest.is_file())
         rule_text = rule.read_text(encoding="utf-8")
         self.assertIn(MANAGED_MARKER, rule_text)
-        self.assertIn("@rules/core/core.md", rule_text)
+        self.assertNotIn("@rules/", rule_text)
+        self.assertIn("Understand before modifying", rule_text)
         self.assertIn("alwaysApply: false", rule_text)
         self.assertIn("description:", rule_text)
         skill_text = skill.read_text(encoding="utf-8")
         self.assertIn(MANAGED_MARKER, skill_text)
-        self.assertIn("skills/core/task-analysis/SKILL.md", skill_text)
+        self.assertIn("# Task Analysis", skill_text)
+        self.assertNotIn("skills/core/task-analysis", skill_text)
         data = json.loads(manifest.read_text(encoding="utf-8"))
         self.assertEqual(data["adapter"], "cursor")
         self.assertEqual(data["adapter_version"], 1)
@@ -317,7 +311,7 @@ class CursorAdapterTests(unittest.TestCase):
         )
         self.assertEqual(cursor_generate.run(self.root, dry_run=False), 0)
         text = rule.read_text(encoding="utf-8")
-        self.assertIn("@rules/core/core.md", text)
+        self.assertIn("Understand before modifying", text)
         self.assertNotIn("stale", text)
 
     def test_user_managed_file_not_overwritten(self) -> None:
@@ -339,9 +333,6 @@ class CursorAdapterTests(unittest.TestCase):
 
     def test_conflict_is_fail_closed(self) -> None:
         """One conflict must prevent writing any planned outputs or the manifest."""
-        security_dir = self.root / "rules" / "security"
-        security_dir.mkdir(parents=True)
-        (security_dir / "security.md").write_text("# security\n", encoding="utf-8")
         _write_harness(
             self.root,
             "version: 1\nprofile: software-engineer\n"
@@ -372,14 +363,7 @@ class CursorAdapterTests(unittest.TestCase):
         self.assertFalse(manifest.exists())
         self.assertEqual(conflict_target.read_text(encoding="utf-8"), conflict_original)
 
-        # Canonical resources remain untouched.
-        before_rule = (self.root / "rules" / "core" / "core.md").read_text(encoding="utf-8")
-        self.assertIn("fixture", before_rule.lower())
-
     def test_stale_managed_output_is_removed(self) -> None:
-        security_dir = self.root / "rules" / "security"
-        security_dir.mkdir(parents=True)
-        (security_dir / "security.md").write_text("# security\n", encoding="utf-8")
         _write_harness(
             self.root,
             "version: 1\nprofile: software-engineer\n"
@@ -449,14 +433,13 @@ class CursorAdapterTests(unittest.TestCase):
         self.assertFalse((self.root / ".cursor").exists())
         self.assertFalse((self.root / ".harness" / "adapters" / "cursor.managed.json").exists())
 
-    def test_canonical_resources_untouched(self) -> None:
-        rule_path = self.root / "rules" / "core" / "core.md"
-        skill_path = self.root / "skills" / "core" / "task-analysis" / "SKILL.md"
-        before_rule = rule_path.read_text(encoding="utf-8")
-        before_skill = skill_path.read_text(encoding="utf-8")
+    def test_does_not_modify_project_intent(self) -> None:
+        harness_before = (self.root / ".harness" / "harness.yaml").read_bytes()
         self.assertEqual(cursor_generate.run(self.root, dry_run=False), 0)
-        self.assertEqual(rule_path.read_text(encoding="utf-8"), before_rule)
-        self.assertEqual(skill_path.read_text(encoding="utf-8"), before_skill)
+        self.assertEqual(
+            (self.root / ".harness" / "harness.yaml").read_bytes(), harness_before
+        )
+        self.assertTrue((self.root / ".cursor" / "rules").is_dir())
 
     def test_manifest_correctness(self) -> None:
         self.assertEqual(cursor_generate.run(self.root, dry_run=False), 0)

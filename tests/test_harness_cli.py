@@ -348,7 +348,9 @@ class HarnessCliIntegrationTests(unittest.TestCase):
         self.assertTrue(rule.is_file())
         self.assertTrue(skill.is_file())
         self.assertIn("Generation", result.stdout)
-        self.assertIn("@rules/core/core.md", rule.read_text(encoding="utf-8"))
+        rule_text = rule.read_text(encoding="utf-8")
+        self.assertNotIn("@rules/", rule_text)
+        self.assertIn("Understand before modifying", rule_text)
 
 
 if __name__ == "__main__":

@@ -149,10 +149,13 @@ class ClaudeAdapterTests(unittest.TestCase):
             resolve_harness(self.root)
 
     def test_missing_registry_when_tools_selected(self) -> None:
-        (self.root / "tools" / "registry.yaml").unlink()
-        with self.assertRaises(ResolutionError) as ctx:
-            resolve_harness(self.root)
-        self.assertIn("Tool Registry not found", str(ctx.exception))
+        """Project-local Registry is not required; pack Registry is used."""
+        project_registry = self.root / "tools" / "registry.yaml"
+        if project_registry.is_file():
+            project_registry.unlink()
+        resolved = resolve_harness(self.root)
+        self.assertEqual(resolved.tool_ids, ["rtk"])
+        self.assertTrue(resolved.tool_files)
 
     # --- Adapter metadata ---
 
@@ -214,12 +217,12 @@ class ClaudeAdapterTests(unittest.TestCase):
         self.assertTrue(manifest.is_file())
         rule_text = rule.read_text(encoding="utf-8")
         self.assertIn(MANAGED_MARKER, rule_text)
-        self.assertIn("rules/core/core.md", rule_text)
-        self.assertIn("Always verify Claude fixture generation.", rule_text)
+        self.assertIn("Understand before modifying", rule_text)
         self.assertNotIn("@rules/", rule_text)
         skill_text = skill.read_text(encoding="utf-8")
         self.assertIn(MANAGED_MARKER, skill_text)
-        self.assertIn("skills/core/task-analysis/SKILL.md", skill_text)
+        self.assertIn("# Task Analysis", skill_text)
+        self.assertNotIn("skills/core/task-analysis", skill_text)
         self.assertIn("name: task-analysis", skill_text)
         self.assertIn("description:", skill_text)
         data = json.loads(manifest.read_text(encoding="utf-8"))
@@ -249,8 +252,7 @@ class ClaudeAdapterTests(unittest.TestCase):
         rule.write_text(f"{MANAGED_MARKER}\n\nstale\n", encoding="utf-8")
         self.assertEqual(claude_generate.run(self.root, dry_run=False), 0)
         text = rule.read_text(encoding="utf-8")
-        self.assertIn("rules/core/core.md", text)
-        self.assertIn("Always verify Claude fixture generation.", text)
+        self.assertIn("Understand before modifying", text)
         self.assertNotIn("stale", text)
 
     def test_user_managed_file_not_overwritten(self) -> None:
@@ -272,9 +274,6 @@ class ClaudeAdapterTests(unittest.TestCase):
 
     def test_conflict_is_fail_closed(self) -> None:
         """One conflict must prevent writing any planned outputs or the manifest."""
-        security_dir = self.root / "rules" / "security"
-        security_dir.mkdir(parents=True)
-        (security_dir / "security.md").write_text("# security\n", encoding="utf-8")
         _write_harness(
             self.root,
             "version: 1\nprofile: software-engineer\n"
@@ -304,9 +303,6 @@ class ClaudeAdapterTests(unittest.TestCase):
         self.assertEqual(conflict_target.read_text(encoding="utf-8"), conflict_original)
 
     def test_stale_managed_output_is_removed(self) -> None:
-        security_dir = self.root / "rules" / "security"
-        security_dir.mkdir(parents=True)
-        (security_dir / "security.md").write_text("# security\n", encoding="utf-8")
         _write_harness(
             self.root,
             "version: 1\nprofile: software-engineer\n"
@@ -379,14 +375,13 @@ class ClaudeAdapterTests(unittest.TestCase):
         self.assertIn("Tool 'rtk'", output)
         self.assertIn("unsupported capability", output.lower())
 
-    def test_canonical_resources_untouched(self) -> None:
-        rule_path = self.root / "rules" / "core" / "core.md"
-        skill_path = self.root / "skills" / "core" / "task-analysis" / "SKILL.md"
-        before_rule = rule_path.read_text(encoding="utf-8")
-        before_skill = skill_path.read_text(encoding="utf-8")
+    def test_does_not_modify_project_intent(self) -> None:
+        harness_before = (self.root / ".harness" / "harness.yaml").read_bytes()
         self.assertEqual(claude_generate.run(self.root, dry_run=False), 0)
-        self.assertEqual(rule_path.read_text(encoding="utf-8"), before_rule)
-        self.assertEqual(skill_path.read_text(encoding="utf-8"), before_skill)
+        self.assertEqual(
+            (self.root / ".harness" / "harness.yaml").read_bytes(), harness_before
+        )
+        self.assertTrue((self.root / ".claude" / "rules").is_dir())
 
     def test_does_not_manage_claude_md(self) -> None:
         claude_md = self.root / "CLAUDE.md"

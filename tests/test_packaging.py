@@ -168,7 +168,7 @@ class InstalledCliSmokeTests(unittest.TestCase):
 
     def _seed_project(self, fixture: Path, dest: Path) -> Path:
         shutil.copytree(fixture, dest)
-        shutil.copytree(CANONICAL_SCHEMAS, dest / "schemas")
+        # Schemas are optional for consumer projects; pack supplies them.
         return dest
 
     def test_console_script_version(self) -> None:

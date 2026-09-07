@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for ``harness init`` content-pack materialization."""
+"""Tests for ``harness init`` project-intent bootstrap."""
 
 from __future__ import annotations
 
@@ -56,19 +56,18 @@ class InitUnitTests(unittest.TestCase):
         result = self._run_init("--profile", "software-engineer")
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         self.assertTrue((self.root / ".harness" / "harness.yaml").is_file())
-        self.assertTrue((self.root / "profiles" / "software-engineer.yaml").is_file())
-        self.assertTrue((self.root / "schemas" / "harness.schema.json").is_file())
-        self.assertTrue((self.root / "tools" / "registry.yaml").is_file())
-        self.assertTrue((self.root / "docs" / "tools" / "token" / "rtk.md").is_file())
+        for rel in ("profiles", "rules", "skills", "schemas", "tools", "docs"):
+            self.assertFalse((self.root / rel).exists(), rel)
+        self.assertFalse((self.root / ".cursor").exists())
+        self.assertFalse((self.root / ".claude").exists())
 
     def test_init_profile_software_engineer(self) -> None:
-        from harness.content.pack import build_profile_file_map, load_profile
+        from harness.content.pack import build_intent_file_map, load_profile
 
         profile = load_profile("software-engineer")
-        files = build_profile_file_map("software-engineer")
+        files = build_intent_file_map("software-engineer")
         self.assertEqual(profile["name"], "software-engineer")
-        self.assertIn(".harness/harness.yaml", files)
-        self.assertIn("profiles/software-engineer.yaml", files)
+        self.assertEqual(set(files.keys()), {".harness/harness.yaml"})
         harness_text = files[".harness/harness.yaml"].decode("utf-8")
         self.assertIn("profile: software-engineer", harness_text)
         self.assertNotIn("\nrules:", harness_text)
@@ -89,37 +88,25 @@ class InitUnitTests(unittest.TestCase):
         self.assertIn("Unchanged", second.stdout)
         self.assertNotIn("Created (", second.stdout)
 
-    def test_conflict_with_different_existing_file(self) -> None:
-        (self.root / "profiles").mkdir()
-        (self.root / "profiles" / "software-engineer.yaml").write_text(
-            "name: software-engineer\ndescription: diverged\n",
+    def test_conflict_with_divergent_harness_yaml(self) -> None:
+        (self.root / ".harness").mkdir()
+        (self.root / ".harness" / "harness.yaml").write_text(
+            "version: 1\nprofile: other\n",
             encoding="utf-8",
         )
         result = self._run_init("--profile", "software-engineer")
         self.assertEqual(result.returncode, 1)
         self.assertIn("Conflicts", result.stdout)
-        self.assertIn("profiles/software-engineer.yaml", result.stdout)
+        self.assertIn(".harness/harness.yaml", result.stdout)
         self.assertIn("fail-closed", result.stderr)
-
-    def test_identical_existing_file_unchanged(self) -> None:
-        from harness.content.pack import build_profile_file_map
-
-        files = build_profile_file_map("software-engineer")
-        target = self.root / "schemas" / "harness.schema.json"
-        target.parent.mkdir(parents=True)
-        target.write_bytes(files["schemas/harness.schema.json"])
-        result = self._run_init("--profile", "software-engineer")
-        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-        self.assertIn("schemas/harness.schema.json", result.stdout)
-        self.assertIn("Unchanged", result.stdout)
 
     def test_dry_run_writes_nothing(self) -> None:
         result = self._run_init("--profile", "software-engineer", "--dry-run")
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         self.assertIn("Dry-run", result.stdout)
         self.assertFalse((self.root / ".harness").exists())
-        self.assertFalse((self.root / "profiles").exists())
-        self.assertFalse((self.root / "schemas").exists())
+        for rel in ("profiles", "rules", "skills", "schemas", "tools", "docs"):
+            self.assertFalse((self.root / rel).exists(), rel)
 
     def test_noninteractive_requires_profile(self) -> None:
         from harness.init import resolve_profile_choice
@@ -130,41 +117,29 @@ class InitUnitTests(unittest.TestCase):
         assert error is not None
         self.assertIn("--profile", error)
 
-    def test_minimal_structure_generated(self) -> None:
+    def test_intent_only_structure(self) -> None:
         result = self._run_init("--profile", "software-engineer")
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
 
-        expected_dirs = [
-            ".harness",
+        self.assertTrue((self.root / ".harness" / "harness.yaml").is_file())
+        for rel in (
             "profiles",
-            "rules/core",
-            "rules/context",
-            "rules/security",
-            "rules/quality",
-            "rules/production",
-            "skills/core",
-            "skills/ai-engineering",
-            "tools",
-            "docs/tools/token",
+            "rules",
+            "skills",
             "schemas",
-        ]
-        for rel in expected_dirs:
-            self.assertTrue((self.root / rel).exists(), rel)
+            "tools",
+            "docs",
+            ".cursor",
+            ".claude",
+        ):
+            self.assertFalse((self.root / rel).exists(), rel)
 
-        # Templates / READMEs must not be copied.
-        self.assertFalse((self.root / "skills" / "SKILL_TEMPLATE.md").exists())
-        self.assertFalse((self.root / "rules" / "README.md").exists())
-        self.assertFalse((self.root / "profiles" / "README.md").exists())
-        # Vendor projections must not be created by init.
-        self.assertFalse((self.root / ".cursor").exists())
-        self.assertFalse((self.root / ".claude").exists())
-
-    def test_schemas_and_profile_valid(self) -> None:
+    def test_validate_and_resolve_after_init(self) -> None:
         result = self._run_init("--profile", "software-engineer")
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
 
-        from harness import config_validation
         from adapters.common.resolve import resolve_harness
+        from harness import config_validation
 
         code = config_validation.validate_repository(self.root)
         self.assertEqual(code, 0)
@@ -173,6 +148,10 @@ class InitUnitTests(unittest.TestCase):
         self.assertTrue(resolved.rule_files)
         self.assertTrue(resolved.skill_files)
         self.assertTrue(resolved.tool_files)
+        self.assertTrue(all(path.is_file() for path in resolved.rule_files))
+        # Resolved files come from the content pack, not the consumer project.
+        for path in (*resolved.rule_files, *resolved.skill_files, *resolved.tool_files):
+            self.assertFalse(str(path.resolve()).startswith(str(self.root.resolve())))
 
     def test_does_not_modify_files_outside_harness_areas(self) -> None:
         sentinel = self.root / "src" / "app.py"
@@ -210,21 +189,16 @@ class InitUnitTests(unittest.TestCase):
     def test_init_root_flag(self) -> None:
         other = Path(self._tmp.name) / "other"
         other.mkdir()
-        result = self._run_init("--profile", "software-engineer", "--root", str(other), cwd=self.root)
+        result = self._run_init(
+            "--profile", "software-engineer", "--root", str(other), cwd=self.root
+        )
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         self.assertTrue((other / ".harness" / "harness.yaml").is_file())
         self.assertFalse((self.root / ".harness").exists())
 
-    def test_filtered_registry_only_profile_tools(self) -> None:
-        result = self._run_init("--profile", "software-engineer")
-        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-        data = yaml.safe_load((self.root / "tools" / "registry.yaml").read_text(encoding="utf-8"))
-        ids = [entry["id"] for entry in data["tools"]]
-        self.assertEqual(ids, ["rtk"])
-
 
 class InitPackagingSmokeTests(unittest.TestCase):
-    """Exercise init from an isolated pip-installed environment."""
+    """Exercise init / validate / generate from an isolated pip-installed environment."""
 
     _venv_dir: Path | None = None
     _harness_bin: Path | None = None
@@ -301,20 +275,21 @@ class InitPackagingSmokeTests(unittest.TestCase):
             env=self._env(),
         )
 
-    def test_external_project_init_validate_generate_dry_run(self) -> None:
+    def test_external_project_init_validate_generate(self) -> None:
         with tempfile.TemporaryDirectory(prefix="external-project-") as tmp:
             project = Path(tmp) / "external-project"
             project.mkdir()
-            # Sentinel outside harness areas
             (project / "src").mkdir()
             (project / "src" / "main.py").write_text("x = 1\n", encoding="utf-8")
+            (project / "package.json").write_text('{"name":"external"}\n', encoding="utf-8")
 
             init = self._run("init", "--profile", "software-engineer", cwd=project)
             self.assertEqual(init.returncode, 0, init.stderr + init.stdout)
             self.assertTrue((project / ".harness" / "harness.yaml").is_file())
             self.assertEqual((project / "src" / "main.py").read_text(encoding="utf-8"), "x = 1\n")
+            for rel in ("profiles", "rules", "skills", "schemas", "tools", "docs"):
+                self.assertFalse((project / rel).exists(), rel)
 
-            # Content pack must come from the installed package, not the checkout.
             assert self._python_bin is not None
             probe = subprocess.run(
                 [
@@ -335,19 +310,45 @@ class InitPackagingSmokeTests(unittest.TestCase):
                 (pack_root / "schemas" / "harness.schema.json").is_file(),
                 pack_root,
             )
-            # Installed pack should be under site-packages, not the repo root.
             self.assertNotEqual(pack_root.resolve(), ROOT.resolve())
 
             validate = self._run("validate", cwd=project)
             self.assertEqual(validate.returncode, 0, validate.stderr + validate.stdout)
 
-            cursor = self._run("generate", "cursor", "--dry-run", cwd=project)
+            cursor = self._run("generate", "cursor", cwd=project)
             self.assertEqual(cursor.returncode, 0, cursor.stderr + cursor.stdout)
-            self.assertFalse((project / ".cursor").exists())
+            rule = project / ".cursor" / "rules" / "harness" / "core--core.mdc"
+            skill = (
+                project / ".cursor" / "skills" / "harness" / "task-analysis" / "SKILL.md"
+            )
+            self.assertTrue(rule.is_file())
+            self.assertTrue(skill.is_file())
+            rule_text = rule.read_text(encoding="utf-8")
+            skill_text = skill.read_text(encoding="utf-8")
+            self.assertNotIn("@rules/", rule_text)
+            self.assertIn("Understand before modifying", rule_text)
+            self.assertIn("# Task Analysis", skill_text)
+            self.assertNotIn("skills/core/task-analysis", skill_text)
+            # Projections must not leak package filesystem paths.
+            self.assertNotIn(str(pack_root), rule_text)
+            self.assertNotIn(str(pack_root), skill_text)
 
-            claude = self._run("generate", "claude", "--dry-run", cwd=project)
+            claude = self._run("generate", "claude", cwd=project)
             self.assertEqual(claude.returncode, 0, claude.stderr + claude.stdout)
-            self.assertFalse((project / ".claude").exists())
+            claude_rule = project / ".claude" / "rules" / "harness" / "core--core.md"
+            claude_skill = project / ".claude" / "skills" / "task-analysis" / "SKILL.md"
+            self.assertTrue(claude_rule.is_file())
+            self.assertTrue(claude_skill.is_file())
+            claude_skill_text = claude_skill.read_text(encoding="utf-8")
+            self.assertIn("# Task Analysis", claude_skill_text)
+            self.assertNotIn("skills/core/task-analysis", claude_skill_text)
+
+            # tools health must resolve the packaged Registry (mock detection).
+            health = self._run("tools", "health", "rtk", cwd=project)
+            # RTK may or may not be installed; exit 0 or 1 both prove resolution worked.
+            self.assertIn(health.returncode, (0, 1), health.stderr + health.stdout)
+            self.assertNotIn("Tool Registry not found", health.stderr)
+            self.assertNotIn("Unknown Tool id", health.stderr)
 
             again = self._run("init", "--profile", "software-engineer", cwd=project)
             self.assertEqual(again.returncode, 0, again.stderr + again.stdout)
