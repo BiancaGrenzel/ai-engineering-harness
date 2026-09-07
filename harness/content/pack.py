@@ -3,8 +3,14 @@
 Canonical authoring content lives at the repository root during development.
 Installed wheels ship a copy under ``harness/content/_data`` (package data).
 
-Callers should use this module instead of inventing their own pack vs source
-resolution. Neither location is mutable global configuration.
+``harness init`` materializes a project-local copy under ``.harness/`` (profiles,
+rules, skills, schemas, tools, docs). After init, that tree is the project's
+source of truth for resolve / validate / generate. Vendor projections
+(``.cursor/``, ``.claude/``) stay at the project root and are produced only by
+``harness generate``.
+
+The installed pack remains immutable and is never silently written into
+projects by validate or generate.
 """
 
 from __future__ import annotations
@@ -12,6 +18,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any
+
+from harness import __version__
 
 try:
     import yaml
@@ -22,6 +30,12 @@ except ImportError:  # pragma: no cover
 class ContentPackError(Exception):
     """Raised when the content pack cannot be located or resolved."""
 
+
+# Built-in content pack version matches the Harness distribution version for now.
+CONTENT_PACK_VERSION = __version__
+
+# Consumer projects materialize pack trees under ``.harness/`` (not project root).
+PROJECT_CONTENT_DIR = ".harness"
 
 _PACKAGE_DIR = Path(__file__).resolve().parent
 _BUNDLED_DATA = _PACKAGE_DIR / "_data"
@@ -54,7 +68,7 @@ def _importlib_bundled_root() -> Path | None:
 
 
 def content_pack_root() -> Path:
-    """Return the read-only content pack root.
+    """Return the read-only installed (or source) content pack root.
 
     Preference order:
     1. Bundled package data (``harness/content/_data``) when it is a complete pack
@@ -62,6 +76,8 @@ def content_pack_root() -> Path:
     2. Repository root when developing from a source checkout / editable install
 
     Does not depend on the consumer project's current working directory.
+    Does not return a consumer project's materialized trees — use
+    :func:`project_content_root` for that.
     """
     for candidate in (_importlib_bundled_root(), _BUNDLED_DATA):
         if candidate is not None and _looks_like_pack_root(candidate):
@@ -72,6 +88,25 @@ def content_pack_root() -> Path:
         "Harness content pack not found. Reinstall the package or run from a "
         "source checkout that includes schemas/ and profiles/."
     )
+
+
+def project_content_root(project_root: Path) -> Path:
+    """Return the content root for resolve / validate / generate.
+
+    Preference order:
+    1. ``<project>/.harness/`` when it contains schemas + profiles (current init)
+    2. ``<project>/`` when it looks like a pack (legacy root layout / dogfood repo)
+    3. Installed/source content pack
+
+    Validate and generate never overwrite project-local content.
+    """
+    root = project_root.resolve()
+    nested = root / PROJECT_CONTENT_DIR
+    if _looks_like_pack_root(nested):
+        return nested
+    if _looks_like_pack_root(root):
+        return root
+    return content_pack_root()
 
 
 def content_path(*parts: str | os.PathLike[str]) -> Path:
@@ -149,12 +184,14 @@ def load_profile(profile: str, pack_root: Path | None = None) -> dict[str, Any]:
 
 
 def minimal_harness_yaml(profile: str) -> bytes:
-    """Return project-intent-only ``.harness/harness.yaml`` bytes for ``profile``."""
+    """Return ``.harness/harness.yaml`` bytes for ``profile``."""
     text = (
         "# Project Harness configuration (project intent).\n"
-        "# Canonical Profiles, Rules, Skills, Schemas, and Tools live in the\n"
-        "# installed Harness content pack (or the Harness repository when\n"
-        "# developing from source). Do not copy those trees into this project.\n"
+        "# Profiles, Rules, Skills, Schemas, and Tools required by the selected\n"
+        "# Profile were materialized under .harness/ by `harness init`.\n"
+        "# After init, those trees are this project's Harness source of truth.\n"
+        "# Vendor projections (.cursor/, .claude/) stay at the project root via\n"
+        "# `harness generate`.\n"
         "#\n"
         "# Profile provides defaults. Omitting rules/skills/tools inherits\n"
         "# those lists from the selected Profile.\n"
@@ -166,27 +203,44 @@ def minimal_harness_yaml(profile: str) -> bytes:
 
 
 def build_intent_file_map(profile: str) -> dict[str, bytes]:
-    """Return the file map for ``harness init`` (project intent only)."""
-    # Validate the profile exists in the pack before writing intent.
+    """Return only ``.harness/harness.yaml`` for ``profile``.
+
+    Prefer :func:`build_profile_file_map` for ``harness init``. Kept for callers
+    that need intent bytes without materializing the profile content tree.
+    """
     load_profile(profile)
-    return {".harness/harness.yaml": minimal_harness_yaml(profile)}
+    return {f"{PROJECT_CONTENT_DIR}/harness.yaml": minimal_harness_yaml(profile)}
+
+
+def _project_rel(pack_relative: str) -> str:
+    """Map a pack-relative path to the consumer project destination under ``.harness/``."""
+    pack_relative = pack_relative.replace("\\", "/").lstrip("/")
+    return f"{PROJECT_CONTENT_DIR}/{pack_relative}"
 
 
 def build_profile_file_map(
     profile: str,
     pack_root: Path | None = None,
 ) -> dict[str, bytes]:
-    """Deprecated: previously materialized a mini Harness tree into projects.
+    """Return the file map for ``harness init`` (intent + profile content).
 
-    Prefer :func:`build_intent_file_map` for ``harness init``. Kept only for
-    transitional callers and tests that inspect pack contents; do not use for
-    new consumer-project bootstrap.
+    Copies from the installed/source content pack into ``.harness/``:
+
+    - ``.harness/harness.yaml``
+    - ``.harness/profiles/<profile>.yaml``
+    - ``.harness/schemas/``
+    - ``.harness/rules/`` and ``.harness/skills/`` referenced by the profile
+    - ``.harness/tools/registry.yaml`` and linked ``.harness/docs/tools/`` when tools
+      are selected
+
+    Does not create ``profiles/``, ``rules/``, ``skills/``, ``schemas/``, ``tools/``,
+    or ``docs/`` at the project root. Does not create ``.cursor/`` or ``.claude/``.
     """
     root = pack_root or content_pack_root()
     data = load_profile(profile, root)
 
     mapping: dict[str, bytes] = {}
-    mapping[".harness/harness.yaml"] = minimal_harness_yaml(profile)
+    mapping[_project_rel("harness.yaml")] = minimal_harness_yaml(profile)
     _add_file(mapping, root, f"profiles/{profile}.yaml")
 
     for schema_name in (
@@ -207,7 +261,9 @@ def build_profile_file_map(
 
     tool_ids = [_tool_name(entry) for entry in (data.get("tools") or [])]
     if tool_ids:
-        mapping["tools/registry.yaml"] = _filtered_registry_bytes(root, tool_ids)
+        mapping[_project_rel("tools/registry.yaml")] = _filtered_registry_bytes(
+            root, tool_ids
+        )
         registry_data = load_yaml(root / "tools" / "registry.yaml")
         assert isinstance(registry_data, dict)
         tools = registry_data.get("tools") or []
@@ -241,12 +297,13 @@ def _read_bytes(path: Path) -> bytes:
     return path.read_bytes()
 
 
-def _add_file(mapping: dict[str, bytes], pack_root: Path, relative: str) -> None:
-    relative = relative.replace("\\", "/").lstrip("/")
-    source = pack_root / relative
+def _add_file(mapping: dict[str, bytes], pack_root: Path, pack_relative: str) -> None:
+    """Read ``pack_relative`` from the pack and store under ``.harness/<pack_relative>``."""
+    pack_relative = pack_relative.replace("\\", "/").lstrip("/")
+    source = pack_root / pack_relative
     if not source.is_file():
-        raise ContentPackError(f"Content pack missing required file: {relative}")
-    mapping[relative] = _read_bytes(source)
+        raise ContentPackError(f"Content pack missing required file: {pack_relative}")
+    mapping[_project_rel(pack_relative)] = _read_bytes(source)
 
 
 def _find_skill_relative(pack_root: Path, skill_id: str) -> str:

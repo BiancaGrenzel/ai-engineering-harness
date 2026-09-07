@@ -2,8 +2,9 @@
 
 Copies the repository's canonical project content into
 ``harness/content/_data`` inside the build tree so wheels ship a read-only
-content pack used by resolve / validate / generate / tools health. Source
-trees keep a single canonical authoring copy at the repository root.
+built-in content pack. ``harness init`` materializes selected content into
+consumer projects from that pack. Source trees keep a single canonical
+authoring copy at the repository root.
 """
 
 from __future__ import annotations

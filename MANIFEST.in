@@ -14,6 +14,18 @@ recursive-include profiles *.yaml
 recursive-include rules *.md
 recursive-include skills *.md
 include tools/registry.yaml
-recursive-include docs/tools *.md
+# Only Tool docs needed for Registry documentation references / packaging.
+recursive-include docs/tools/token *.md
 
 global-exclude __pycache__ *.py[cod] .DS_Store
+prune tests
+prune scripts
+prune build
+prune dist
+prune .venv
+prune .git
+prune .cursor
+prune .claude
+prune docs/architecture
+prune docs/project
+prune docs/templates

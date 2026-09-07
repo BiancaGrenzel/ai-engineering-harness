@@ -5,8 +5,11 @@ Treats configuration content as data. Does not execute Rules, Skills, Tools,
 or Profile content.
 
 Project intent comes from ``<project>/.harness/harness.yaml``.
-Canonical Profiles, Rules, Skills, Schemas, and Tools come from the installed
-(or source) content pack via ``harness.content.pack``.
+After ``harness init``, Profiles, Rules, Skills, Schemas, and Tools are
+resolved from ``<project>/.harness/`` when present; otherwise from a legacy
+project-root pack layout or the installed (or source) content pack via
+``harness.content.pack``. Vendor projections (``.cursor/``, ``.claude/``) are
+separate and stay at the project root.
 """
 
 from __future__ import annotations
@@ -236,19 +239,25 @@ def resolve_tool_files(content_root: Path, tool_ids: list[str]) -> list[Path]:
 
 
 def resolve_harness(root: Path) -> ResolvedHarness:
-    """Load project intent, merge Profile defaults, resolve from the content pack."""
+    """Load project intent, merge Profile defaults, resolve content paths.
+
+    Prefers ``<project>/.harness/`` materialized content when present; then a
+    legacy project-root pack layout; otherwise the installed/source content pack.
+    Never writes to project content trees. Never reads ``.cursor/`` or ``.claude/``
+    as canonical content.
+    """
     require_deps()
     root = root.resolve()
 
     try:
-        from harness.content.pack import ContentPackError, content_pack_root
+        from harness.content.pack import ContentPackError, project_content_root
     except ImportError as exc:  # pragma: no cover
         raise ResolutionError(
             "Unable to import harness.content.pack for content resolution"
         ) from exc
 
     try:
-        content_root = content_pack_root()
+        content_root = project_content_root(root)
     except ContentPackError as exc:
         raise ResolutionError(str(exc)) from exc
 
@@ -260,11 +269,11 @@ def resolve_harness(root: Path) -> ResolvedHarness:
         raise ResolutionError(f"Config not found: {config_path}")
     if not harness_schema.is_file():
         raise ResolutionError(
-            "Schema not found in content pack: schemas/harness.schema.json"
+            f"Schema not found: schemas/harness.schema.json (under {content_root})"
         )
     if not profile_schema.is_file():
         raise ResolutionError(
-            "Schema not found in content pack: schemas/profile.schema.json"
+            f"Schema not found: schemas/profile.schema.json (under {content_root})"
         )
 
     harness_data = load_yaml(config_path)
@@ -281,7 +290,7 @@ def resolve_harness(root: Path) -> ResolvedHarness:
     profile_path = content_root / "profiles" / f"{profile_name}.yaml"
     if not profile_path.is_file():
         raise ResolutionError(
-            f"Profile not found in content pack: profiles/{profile_name}.yaml"
+            f"Profile not found: profiles/{profile_name}.yaml (under {content_root})"
         )
 
     profile_data = load_yaml(profile_path)

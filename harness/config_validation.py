@@ -5,9 +5,8 @@ Syntax validation only. It does not detect, install, configure, or execute Tools
 
 Shared by ``scripts/validate-config.py`` and ``harness validate``.
 
-Schemas and the Tool Registry are loaded from the content pack. Project intent
-is ``.harness/harness.yaml``; consumer projects do not need local ``schemas/``
-or ``tools/``.
+After ``harness init``, schemas and the Tool Registry are loaded from
+project-local trees when present; otherwise from the installed content pack.
 """
 
 from __future__ import annotations
@@ -167,8 +166,24 @@ def validate_registry_paths(registry_path: Path, schema_path: Path, root: Path) 
     return 0
 
 
+def _content_paths_for_root(root: Path) -> tuple[Path, Path, Path, Path]:
+    """Return (content_root, harness_schema, registry_schema, registry_path)."""
+    from harness.content.pack import ContentPackError, project_content_root
+
+    try:
+        content = project_content_root(root)
+    except ContentPackError as exc:
+        raise FileNotFoundError(str(exc)) from exc
+    return (
+        content,
+        content / "schemas" / "harness.schema.json",
+        content / "schemas" / "tool-registry.schema.json",
+        content / "tools" / "registry.yaml",
+    )
+
+
 def _content_pack_paths() -> tuple[Path, Path, Path, Path]:
-    """Return (pack_root, harness_schema, registry_schema, registry_path)."""
+    """Return paths from the installed/source content pack (authoring / scripts)."""
     from harness.content.pack import ContentPackError, content_pack_root
 
     try:
@@ -184,9 +199,11 @@ def _content_pack_paths() -> tuple[Path, Path, Path, Path]:
 
 
 def validate_repository(root: Path) -> int:
-    """Validate project intent against the content pack and resolve selections."""
+    """Validate project config and resolve selections from project-local content."""
     try:
-        pack, harness_schema, registry_schema, registry_file = _content_pack_paths()
+        content, harness_schema, registry_schema, registry_file = _content_paths_for_root(
+            root
+        )
     except FileNotFoundError as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -210,7 +227,7 @@ def validate_repository(root: Path) -> int:
 
     if not registry_file.is_file():
         return 0
-    return validate_registry_paths(registry_file, registry_schema, pack)
+    return validate_registry_paths(registry_file, registry_schema, content)
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -25,7 +25,7 @@ def cmd_version(_args: object) -> int:
 
 
 def cmd_init(args: object) -> int:
-    """Create project intent (``.harness/harness.yaml``) only."""
+    """Materialize project intent and selected profile content."""
     code, _report = run_init(
         root=getattr(args, "root", None),
         profile=getattr(args, "profile", None),
@@ -35,7 +35,7 @@ def cmd_init(args: object) -> int:
 
 
 def cmd_validate(args: object) -> int:
-    """Validate project intent against the content pack and resolve selections."""
+    """Validate project config using project-local content when present."""
     try:
         root = resolve_root_arg(getattr(args, "root", None))
     except FileNotFoundError as exc:
@@ -62,22 +62,21 @@ def cmd_tools_health(args: object) -> int:
     """Resolve, detect, and health-check one Tool; print a human report."""
     tool_id = getattr(args, "tool_id")
     try:
-        resolve_root_arg(getattr(args, "root", None))
+        from harness.content.pack import ContentPackError, project_content_root
+
+        root = resolve_root_arg(getattr(args, "root", None))
+        content_root = project_content_root(root)
+        registry_file = content_root / "tools" / "registry.yaml"
     except FileNotFoundError as exc:
         print(str(exc), file=sys.stderr)
         return 1
-
-    try:
-        from harness.content.pack import ContentPackError, registry_path as pack_registry_path
-
-        registry_file = pack_registry_path()
     except ContentPackError as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
     if not registry_file.is_file():
         print(
-            f"Tool Registry not found in content pack: {registry_file}",
+            f"Tool Registry not found: {registry_file}",
             file=sys.stderr,
         )
         return 1

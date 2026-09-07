@@ -1,12 +1,12 @@
-"""Read-only content pack access and project intent materialization.
+"""Read-only content pack access and project content materialization.
 
 The installed engine ships canonical Profiles, Rules, Skills, Schemas, Tool
 Registry, and Tool docs under ``harness.content._data``. During source
 development, the same content is authored at the repository root.
 
-Consumer projects keep only project intent (``.harness/harness.yaml``).
-Adapters generate self-contained vendor projections under ``.cursor/`` /
-``.claude/``.
+``harness init`` materializes selected content under ``.harness/``. After init,
+those project-local trees are the project's Harness source of truth. Adapters
+generate vendor projections under ``.cursor/`` / ``.claude/`` at the project root.
 """
 
 from __future__ import annotations
@@ -19,6 +19,8 @@ from harness.content.materialize import (
     plan_materialization,
 )
 from harness.content.pack import (
+    CONTENT_PACK_VERSION,
+    PROJECT_CONTENT_DIR,
     ContentPackError,
     build_intent_file_map,
     build_profile_file_map,
@@ -26,12 +28,15 @@ from harness.content.pack import (
     content_path,
     list_profiles,
     load_profile,
+    project_content_root,
     read_content,
     registry_path,
     schema_path,
 )
 
 __all__ = [
+    "CONTENT_PACK_VERSION",
+    "PROJECT_CONTENT_DIR",
     "ContentPackError",
     "MaterializeReport",
     "apply_plan",
@@ -44,6 +49,7 @@ __all__ = [
     "load_profile",
     "materialize",
     "plan_materialization",
+    "project_content_root",
     "read_content",
     "registry_path",
     "schema_path",
