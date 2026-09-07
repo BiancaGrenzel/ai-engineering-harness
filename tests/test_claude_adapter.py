@@ -5,8 +5,9 @@ Fixtures live under tests/adapters/claude/fixtures/ (isolated from the real
 .claude/ directory and from Cursor fixtures). The test module stays at tests/
 so unittest discovery does not shadow the top-level adapters package.
 
-Schemas are copied from the repository canonical schemas/ into each temp
-project — fixtures must not carry divergent schema copies.
+Fixture projects carry minimal trees for inventory; they intentionally omit
+``schemas/`` so resolve falls back to the installed/source content pack unless
+a test materializes a full project-local pack.
 """
 
 from __future__ import annotations
@@ -71,8 +72,8 @@ class ClaudeAdapterTests(unittest.TestCase):
         self._tmpdir = tempfile.TemporaryDirectory()
         self.root = Path(self._tmpdir.name) / "project"
         shutil.copytree(FIXTURE_PROJECT, self.root)
-        # Single source of truth: always use repository schemas/.
-        shutil.copytree(CANONICAL_SCHEMAS, self.root / "schemas")
+        # Do not copy schemas/: project_content_root would treat this incomplete
+        # fixture as a full project-local pack. Resolution uses the content pack.
 
     def tearDown(self) -> None:
         self._tmpdir.cleanup()

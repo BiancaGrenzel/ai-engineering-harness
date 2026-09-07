@@ -262,12 +262,16 @@ class InstalledCliSmokeTests(unittest.TestCase):
         assert self._python_bin is not None
         script = (
             "from pathlib import Path; "
-            "from harness.content.pack import content_pack_root, list_profiles; "
+            "from harness import __version__; "
+            "from harness.content.pack import ( "
+            "  CONTENT_PACK_VERSION, content_pack_root, list_profiles); "
             "root = content_pack_root(); "
+            "assert CONTENT_PACK_VERSION == __version__; "
             "assert (root / 'schemas' / 'harness.schema.json').is_file(), root; "
             "assert (root / 'profiles' / 'software-engineer.yaml').is_file(), root; "
             "assert 'software-engineer' in list_profiles(root); "
-            "assert (root / '_data').name != root.name or True; "
+            "assert (root / 'rules' / 'core' / 'core.md').is_file(), root; "
+            "assert (root / 'tools' / 'registry.yaml').is_file(), root; "
             "print(root)"
         )
         result = subprocess.run(
@@ -282,6 +286,7 @@ class InstalledCliSmokeTests(unittest.TestCase):
         pack_root = Path(result.stdout.strip())
         self.assertNotEqual(pack_root.resolve(), ROOT.resolve())
         self.assertTrue((pack_root / "tools" / "registry.yaml").is_file())
+        self.assertTrue((pack_root / "docs" / "tools" / "token" / "rtk.md").is_file())
 
 
 if __name__ == "__main__":

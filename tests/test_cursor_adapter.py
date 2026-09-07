@@ -5,8 +5,9 @@ Fixtures live under tests/adapters/cursor/fixtures/ (isolated from the real
 .cursor/ directory). The test module stays at tests/ so unittest discovery
 does not shadow the top-level adapters package.
 
-Schemas are copied from the repository canonical schemas/ into each temp
-project — fixtures must not carry divergent schema copies.
+Fixture projects carry minimal trees for inventory; they intentionally omit
+``schemas/`` so resolve falls back to the installed/source content pack unless
+a test materializes a full project-local pack.
 """
 
 from __future__ import annotations
@@ -71,8 +72,8 @@ class CursorAdapterTests(unittest.TestCase):
         self._tmpdir = tempfile.TemporaryDirectory()
         self.root = Path(self._tmpdir.name) / "project"
         shutil.copytree(FIXTURE_PROJECT, self.root)
-        # Single source of truth: always use repository schemas/.
-        shutil.copytree(CANONICAL_SCHEMAS, self.root / "schemas")
+        # Do not copy schemas/: project_content_root would treat this incomplete
+        # fixture as a full project-local pack. Resolution uses the content pack.
 
     def tearDown(self) -> None:
         self._tmpdir.cleanup()
@@ -214,13 +215,14 @@ class CursorAdapterTests(unittest.TestCase):
             resolve_harness(self.root)
 
     def test_project_local_registry_is_not_required(self) -> None:
-        """Consumer projects resolve Tools from the content pack Registry."""
+        """Without schemas/, resolve falls back to the content-pack Registry."""
         project_registry = self.root / "tools" / "registry.yaml"
         if project_registry.is_file():
             project_registry.unlink()
         resolved = resolve_harness(self.root)
         self.assertEqual(resolved.tool_ids, ["rtk"])
         self.assertTrue(resolved.tool_files)
+        self.assertNotEqual(resolved.content_root, self.root.resolve())
 
     # --- Adapter metadata ---
 

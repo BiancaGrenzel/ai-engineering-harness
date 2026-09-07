@@ -171,7 +171,6 @@ class HarnessCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "project"
             shutil.copytree(FIXTURE_PROJECT, root)
-            shutil.copytree(CANONICAL_SCHEMAS, root / "schemas")
             result = _run_module(
                 "generate", "cursor", "--root", str(root), "--dry-run"
             )
@@ -183,7 +182,6 @@ class HarnessCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "project"
             shutil.copytree(FIXTURE_PROJECT, root)
-            shutil.copytree(CANONICAL_SCHEMAS, root / "schemas")
             result = _run_module("generate", "cursor", "--root", str(root))
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertTrue(
@@ -211,7 +209,6 @@ class HarnessCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "project"
             shutil.copytree(claude_fixture, root)
-            shutil.copytree(CANONICAL_SCHEMAS, root / "schemas")
             result = _run_module(
                 "generate", "claude", "--root", str(root), "--dry-run"
             )
@@ -226,7 +223,6 @@ class HarnessCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "project"
             shutil.copytree(claude_fixture, root)
-            shutil.copytree(CANONICAL_SCHEMAS, root / "schemas")
             result = _run_module("generate", "claude", "--root", str(root))
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertTrue(
@@ -331,7 +327,6 @@ class HarnessCliIntegrationTests(unittest.TestCase):
         self._tmpdir = tempfile.TemporaryDirectory()
         self.root = Path(self._tmpdir.name) / "project"
         shutil.copytree(FIXTURE_PROJECT, self.root)
-        shutil.copytree(CANONICAL_SCHEMAS, self.root / "schemas")
 
     def tearDown(self) -> None:
         self._tmpdir.cleanup()
