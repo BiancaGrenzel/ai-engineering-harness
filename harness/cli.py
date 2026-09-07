@@ -13,6 +13,7 @@ from pathlib import Path
 
 from harness.commands import (
     cmd_generate,
+    cmd_init,
     cmd_tools_health,
     cmd_validate,
     cmd_version,
@@ -46,6 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Usage:\n"
             "  harness <command>\n\n"
             "Commands:\n"
+            "  init\n"
             "  validate\n"
             "  generate\n"
             "  tools\n"
@@ -54,6 +56,34 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     sub = parser.add_subparsers(dest="command", metavar="<command>")
+
+    init = sub.add_parser(
+        "init",
+        help="Initialize a Harness-enabled project from the content pack",
+        description=(
+            "Materialize project content (schemas, profile, rules, skills, "
+            "tools registry, and related docs) into the target directory. "
+            "Does not generate vendor projections (.cursor/, .claude/); "
+            "use harness generate for that."
+        ),
+    )
+    init.add_argument(
+        "--root",
+        type=Path,
+        default=None,
+        help="Target project directory (default: current working directory)",
+    )
+    init.add_argument(
+        "--profile",
+        default=None,
+        help="Profile to materialize (required when stdin is non-interactive)",
+    )
+    init.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show planned creates/unchanged/conflicts without writing files",
+    )
+    init.set_defaults(func=cmd_init)
 
     validate = sub.add_parser(
         "validate",

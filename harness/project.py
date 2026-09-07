@@ -40,3 +40,21 @@ def resolve_root_arg(root: Path | None) -> Path:
             raise FileNotFoundError("Harness configuration not found.")
         return resolved
     return require_project_root()
+
+
+def resolve_init_root(root: Path | None = None) -> Path:
+    """Resolve the target directory for ``harness init``.
+
+    Unlike ``resolve_root_arg``, init does not require an existing
+    ``.harness/harness.yaml`` and does not walk upward. The target is the
+    explicit ``--root`` or the current working directory.
+    """
+    if root is not None:
+        resolved = root.resolve()
+    else:
+        resolved = Path.cwd().resolve()
+    if not resolved.exists():
+        raise FileNotFoundError(f"Init root does not exist: {resolved}")
+    if not resolved.is_dir():
+        raise NotADirectoryError(f"Init root is not a directory: {resolved}")
+    return resolved

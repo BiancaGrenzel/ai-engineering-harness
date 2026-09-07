@@ -7,6 +7,7 @@ import sys
 from harness import __version__
 from harness import config_validation
 from harness import dispatch
+from harness.init import run_init
 from harness.project import resolve_root_arg
 from harness.tools.detection import ToolDetector
 from harness.tools.health import ToolHealthChecker, format_health_cli_report
@@ -21,6 +22,16 @@ def cmd_version(_args: object) -> int:
     """Print Harness package/CLI version (not adapter or config version)."""
     print(__version__)
     return 0
+
+
+def cmd_init(args: object) -> int:
+    """Materialize a Harness-enabled project from the installed content pack."""
+    code, _report = run_init(
+        root=getattr(args, "root", None),
+        profile=getattr(args, "profile", None),
+        dry_run=bool(getattr(args, "dry_run", False)),
+    )
+    return code
 
 
 def cmd_validate(args: object) -> int:
