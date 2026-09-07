@@ -12,16 +12,14 @@ Snapshot based on the repository working tree on 2026-09-07. Status reflects obs
 | Tool resolution | Implemented | Read-only Registry loading and lookup by stable Tool id. |
 | Tool detection | Implemented | Read-only CLI detection library with platform checks, constrained version probes, and transient results. |
 | Tool health | Implemented | Read-only CLI health probe composed with DetectionResult; optional declarative Registry `health` contract; `harness tools health <tool>`. |
-| Cursor adapter | Experimental | Generates a Cursor projection from canonical configuration with fail-closed conflict handling. |
+| Cursor adapter | Experimental | Generates a Cursor projection from configuration with fail-closed conflict handling. |
 | Claude adapter | Experimental | Generates a Claude Code projection (`.claude/rules`, `.claude/skills`) without managing `CLAUDE.md`. |
 | CLI | Implemented | Thin `init`, `validate`, `generate cursor|claude`, `tools health`, and `version` interface. |
-| Packaging | Implemented | Local `pip install .` exposes `harness` console script and a read-only content pack. |
-| Project bootstrap | Implemented | `harness init --profile software-engineer` creates project intent only; fail-closed conflicts; dry-run. |
+| Packaging | Implemented | Local `pip install .` exposes `harness` console script and a built-in content pack as package resources. |
+| Project bootstrap | Implemented | `harness init --profile software-engineer` materializes content under `.harness/`; fail-closed conflicts; dry-run. |
 | Security Profiles | Planned | No security-specific Profile exists yet; security is currently a selected Rule category. |
 
 ## Commands
-
-Run from the repository root:
 
 ```text
 python scripts/validate-config.py
@@ -44,13 +42,15 @@ python -m unittest discover -s tests -q
 ## Layers
 
 ```text
-Installed Engine     → harness/ + adapters/ + content pack
-Project Intent       → .harness/harness.yaml
-Vendor Projection    → .cursor/, .claude/ (self-contained via harness generate)
+Installed Engine     → harness/ + adapters/ + built-in content pack
+Project Content      → .harness/ (harness.yaml + profiles/rules/skills/schemas/tools/docs)
+Vendor Projection    → .cursor/, .claude/ at project root (via harness generate)
 ```
 
-Authoring (this repository) still keeps canonical trees at the repo root for
-dogfooding and packaging into `harness/content/_data`.
+Authoring (this repository) keeps canonical trees at the repo root for dogfooding
+and packaging into `harness/content/_data`. End users need only the installed
+package, not this repository. Consumer projects keep Harness content under
+`.harness/`, not at the project root.
 
 ## Current repository structure
 
@@ -59,13 +59,13 @@ dogfooding and packaging into `harness/content/_data`.
 adapters/       vendor-specific projections (Cursor, Claude)
 docs/           architecture, Tool docs, and project context
 harness/        thin CLI, shared runtime, and content-pack helpers
-profiles/       reusable capability compositions
-rules/          canonical persistent behavior
-schemas/        configuration and Registry schemas
+profiles/       reusable capability compositions (authoring + dogfood)
+rules/          canonical persistent behavior (authoring + dogfood)
+schemas/        configuration and Registry schemas (authoring + dogfood)
 scripts/        validation and bootstrap helpers
-skills/         canonical reusable procedures
+skills/         canonical reusable procedures (authoring + dogfood)
 tests/          unit and adapter tests
-tools/          declarative Tool Registry
+tools/          declarative Tool Registry (authoring + dogfood)
 ```
 
 ## Current tests
@@ -76,11 +76,12 @@ The standard command is `python -m unittest discover -s tests -q`.
 
 - Only the `software-engineer` Profile is shipped in the content pack. Future Profiles are content additions, not engine features.
 - There is one implemented, experimental Cursor adapter; Claude adapter is also experimental. Codex and other adapters are not implemented.
-- Configuration validation is structural plus pack-aware resolution of selected Profile / Rules / Skills / Tools.
+- Configuration validation is structural plus resolution of selected Profile / Rules / Skills / Tools.
 - The Registry currently contains one Tool and has no installation, configuration, package-management, or MCP runtime layer.
 - Detection and Health support declared CLI Tools only. Health uses a minimal declared liveness probe; it does not prove full Tool capability.
 - No effective-risk, authorization, provenance, trust, or persisted runtime observation model exists.
 - PyPI publishing and release automation are not implemented.
+- No separate content-pack versioning or remote content registry.
 
 ## Current risks
 

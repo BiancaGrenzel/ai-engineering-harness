@@ -78,20 +78,30 @@ This is an index, not a replacement for architecture documents or ADRs.
 **Status:** Accepted.  
 **Reference:** `docs/architecture/cli.md`, `harness/cli.py`.
 
-**Decision:** Packaging installs the engine (`harness` + `adapters`) plus a read-only content pack used for resolve / validate / generate / tools health.
-**Reason:** Consumer projects should carry project intent only; canonical content stays package-owned.
+**Decision:** Packaging installs the engine (`harness` + `adapters`) plus a read-only built-in content pack as package resources.
+**Reason:** End users must be able to `pip install` without a repository checkout; the pack is the immutable seed for `harness init`.
 **Status:** Accepted.
 **Reference:** `pyproject.toml`, `setup.py`, `harness/content/`, `docs/architecture/cli.md`.
 
-**Decision:** `harness init` creates only `.harness/harness.yaml` (project intent); conflicts are fail-closed; vendor projections remain `harness generate`.
-**Reason:** Keep Engine / Content Pack / Project Intent / Vendor Projection separated and avoid copying a mini Harness repository into every project.
+**Decision:** `harness init` materializes project intent plus the selected Profile's Rules, Skills, schemas, Tool Registry, and Tool docs under `.harness/`; conflicts are fail-closed; vendor projections (`.cursor/`, `.claude/`) remain at the project root via `harness generate`.
+**Reason:** Keep Harness canonical content namespaced under `.harness/` so consumer project roots stay clean; adapters project only vendor-specific files at the root.
 **Status:** Accepted.
 **Reference:** `harness/init.py`, `harness/content/materialize.py`, `docs/architecture/cli.md`.
 
-**Decision:** Cursor Rules and Claude Skills are self-contained materialized projections (no project-local `@rules/` or `skills/` dependency).
-**Reason:** Canonical content lives in the installed package; generated agent trees must work without that package path at agent runtime.
+**Decision:** Resolve / validate / generate prefer `<project>/.harness/` when it contains schemas + profiles; then a legacy project-root pack layout; otherwise the installed content pack.
+**Reason:** Current init writes under `.harness/`; dogfood/authoring and older root layouts remain readable without inventing a second source of truth.
+**Status:** Accepted.
+**Reference:** `harness.content.pack.project_content_root`, `adapters/common/resolve.py`.
+
+**Decision:** Cursor Rules and Claude Skills are self-contained materialized projections (no runtime dependency on package filesystem paths).
+**Reason:** Generated agent trees must work for agents without importing the Harness package path.
 **Status:** Accepted.
 **Reference:** `adapters/cursor/generate.py`, `adapters/claude/generate.py`.
+
+**Decision:** Built-in content pack version matches the Harness distribution version for now (no separate content-pack versioning system).
+**Reason:** Keep packaging simple until independent content releases are needed.
+**Status:** Accepted.
+**Reference:** `harness.content.pack.CONTENT_PACK_VERSION`, `harness.__version__`.
 
 ## Runtime
 

@@ -54,12 +54,11 @@
 
 ### Changed
 
-- Content Pack / Consumer Project architecture: package-owned canonical content + project intent + self-contained projections
-- `harness init` creates only `.harness/harness.yaml` (no project-local profiles/rules/skills/schemas/tools/docs)
-- `resolve_harness`, `harness validate`, and `harness tools health` read canonical content from the content pack
-- Cursor Rules are self-contained `.mdc` bodies (no `@rules/` wrappers)
-- Claude Skills are self-contained (no project-local `skills/` dependency)
-- Document Installed Engine vs Content Pack vs Project Intent vs Generated Vendor Projection
+- `harness init` materializes Profiles, Rules, Skills, schemas, Tool Registry, and Tool docs under `.harness/` (not at the project root)
+- Resolve / validate / tools health prefer `<project>/.harness/` when present; then legacy root pack layout; otherwise the installed pack
+- `.cursor/` and `.claude/` remain project-root vendor projections only
+- Document Installed Engine vs Built-in Content Pack vs Project Content (`.harness/`) vs Generated Vendor Projection
+- Content pack version equals Harness distribution version (`0.1.0`) for now
 - Document installed (`harness`) vs development (`python -m harness`) invocation
 - Cursor adapter conflicts are **fail-closed** (preflight before any writes)
 - Cursor Rules default to `alwaysApply: false` with description (Apply Intelligently)
@@ -67,3 +66,5 @@
 - Managed manifest includes `adapter_version` and documents inventory-only role
 - Adapter tests use canonical `schemas/` (no fixture schema copies)
 - Prefer `python -m adapters.cursor.generate` (script path bootstrap retained)
+- Cursor Rules are self-contained `.mdc` bodies (no `@rules/` wrappers)
+- Claude Skills are self-contained (no package filesystem path dependency)

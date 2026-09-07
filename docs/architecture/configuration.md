@@ -2,7 +2,13 @@
 
 Official standard for Harness configuration and Profiles.
 
-Canonical project configuration lives in [`.harness/harness.yaml`](../../.harness/harness.yaml). Reusable defaults live in [`profiles/`](../../profiles/). This document defines the contract. The CLI (`python -m harness`) reads these files for validation and adapter generation; see [`cli.md`](cli.md).
+Project configuration lives in [`.harness/harness.yaml`](../../.harness/harness.yaml).
+Reusable Profile defaults are authored in [`profiles/`](../../profiles/) and shipped
+in the installed content pack. After `harness init`, a project-local
+`profiles/<name>.yaml` (plus the selected Rules, Skills, schemas, and Tools) is
+the project's source of truth. This document defines the contract. The CLI
+(`python -m harness`) reads these files for validation and adapter generation;
+see [`cli.md`](cli.md).
 
 ## Purpose
 
@@ -11,6 +17,18 @@ Configuration answers a single question for a project:
 > Which AI Engineering Harness capabilities does this project want to use?
 
 Configuration is **declarative**. It declares desired state. It does not contain long agent instructions, Skill workflows, or Tool manuals.
+
+## Installed pack vs project-local content
+
+| Location | Role |
+| --- | --- |
+| Installed content pack (`harness/content/_data`) | Immutable seed shipped with the package |
+| Project trees after `harness init` | `.harness/profiles`, `.harness/rules`, `.harness/skills`, `.harness/schemas`, `.harness/tools`, `.harness/docs` — project Harness source of truth |
+| This repository's root trees | Authoring / dogfooding source used to build the pack |
+
+End users need the installed package, not a clone of this repository. There is no
+remote content registry and no runtime download from GitHub. Vendor projections
+(`.cursor/`, `.claude/`) stay at the project root and are not Harness canonical content.
 
 ## Core concepts
 

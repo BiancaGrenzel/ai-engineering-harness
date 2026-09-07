@@ -9,9 +9,9 @@ Keep agent-specific rendering inside each adapter directory.
 Put only **vendor-neutral** helpers here:
 
 - Loading `.harness/harness.yaml` (project intent)
-- Merging Profile defaults from the content pack
-- Resolving Rule / Skill identifiers to content-pack paths
-- Resolving Tool identifiers via the content-pack `tools/registry.yaml`
+- Merging Profile defaults from `.harness/` content (preferred), legacy root pack, or the content pack
+- Resolving Rule / Skill identifiers to content paths
+- Resolving Tool identifiers via `tools/registry.yaml`
 - Loading and validating `adapter.yaml` metadata
 - Parsing Skill frontmatter fields needed by adapters (`name`, `description`)
 - Fail-closed preflight, path confinement, conflict detection, stale removal, and managed manifests
