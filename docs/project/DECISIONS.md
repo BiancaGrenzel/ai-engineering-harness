@@ -51,6 +51,16 @@ This is an index, not a replacement for architecture documents or ADRs.
 **Status:** Accepted; Cursor is experimental.  
 **Reference:** `docs/architecture/adapters.md`, `adapters/cursor/README.md`.
 
+**Decision:** Managed adapter paths must resolve strictly under the project root (path confinement in `adapters/common/apply.py`).  
+**Reason:** Fail-closed generation must not write or remove files outside the project.  
+**Status:** Accepted.  
+**Reference:** `adapters/common/apply.py`, `adapters/ARCHITECTURE.md`.
+
+**Decision:** Adapter Tool identity resolves through `tools/registry.yaml`; `docs/tools/` remains human documentation referenced by Registry `documentation`.  
+**Reason:** Operational Tool identity must not diverge from the Registry.  
+**Status:** Accepted.  
+**Reference:** `adapters/common/resolve.py`, `docs/architecture/adapters.md`.
+
 ## CLI
 
 **Decision:** The CLI is a thin dispatcher over validation, adapter, and Tool diagnostic logic.  

@@ -49,9 +49,10 @@ Shared helpers live under `adapters/common/`:
 
 | Helper | Responsibility |
 | --- | --- |
-| `resolve.py` | Config + Profile merge + path resolution |
+| `resolve.py` | Config + Profile merge + path resolution (Tools via Registry) |
+| `frontmatter.py` | Minimal Skill frontmatter (`name`, `description`) |
 | `metadata.py` | Load / validate `adapter.yaml` |
-| `apply.py` | Preflight, conflicts, apply, manifest |
+| `apply.py` | Path confinement, preflight, conflicts, apply, manifest |
 
 Keep Cursor/Claude-specific rendering in the adapter package. Do not invent a plugin framework.
 
@@ -95,9 +96,10 @@ Before writing files, an adapter must:
 2. Locate `.harness/harness.yaml` (or an explicit root override for tests)
 3. Validate structural schema (reuse `schemas/harness.schema.json` / profile schema)
 4. Resolve the Profile (omit list → inherit; present list → replace)
-5. Resolve selected Rules, Skills, and Tools to canonical paths
+5. Resolve selected Rules and Skills to canonical paths; resolve Tools via `tools/registry.yaml` (documentation under `docs/tools/`)
 6. Build a plan and verify planned kinds match supported capabilities
 7. Fail clearly when a selected resource is missing
+8. Fail closed when a planned or stale path would escape the project root
 
 ## Resolution / Profile inheritance
 
@@ -128,6 +130,7 @@ Generation must:
 | Missing target | Create (after clean preflight) |
 | Harness-managed target | Update (after clean preflight) |
 | User-managed target | Conflict — **no filesystem changes at all** |
+| Path outside project root | Error — **no filesystem changes at all** |
 | Unsupported capability | Warn; do not invent projection |
 | Missing resource | Error before plan/apply |
 | Capability mismatch vs `adapter.yaml` | Error |

@@ -10,9 +10,11 @@ Put only **vendor-neutral** helpers here:
 
 - Loading `.harness/harness.yaml`
 - Merging Profile defaults
-- Resolving Rule / Skill / Tool identifiers to canonical paths
+- Resolving Rule / Skill identifiers to canonical paths
+- Resolving Tool identifiers via `tools/registry.yaml` (docs under `docs/tools/`)
 - Loading and validating `adapter.yaml` metadata
-- Fail-closed preflight, conflict detection, stale removal, and managed manifests
+- Parsing Skill frontmatter fields needed by adapters (`name`, `description`)
+- Fail-closed preflight, path confinement, conflict detection, stale removal, and managed manifests
 
 ## Non-goals
 
@@ -26,11 +28,20 @@ Put only **vendor-neutral** helpers here:
 
 | Module | Role |
 | --- | --- |
-| [`resolve.py`](resolve.py) | Load config, merge Profile, resolve resource paths |
+| [`resolve.py`](resolve.py) | Load config, merge Profile, resolve Rules/Skills; Tools via Registry |
+| [`frontmatter.py`](frontmatter.py) | Minimal Skill `name` / `description` frontmatter parse |
 | [`metadata.py`](metadata.py) | Load / validate `adapter.yaml`; capability consistency checks |
-| [`apply.py`](apply.py) | Preflight, conflicts, apply, managed-file detection, manifest inventory |
+| [`apply.py`](apply.py) | Path confinement, preflight, conflicts, apply, managed-file detection, manifest inventory |
 
 Adapters import these helpers. They must not become a second configuration source of truth.
+
+## Path confinement
+
+Every planned write and every stale removal must resolve **strictly under** the project `root`.
+
+Rejected forms include parent traversal (`../`), absolute paths, Windows drive/UNC paths, and paths that escape `root` after resolution (including symlink escapes when applicable).
+
+Invalid paths are preflight **errors**. Fail-closed: no writes when confinement fails.
 
 ## Pipeline
 

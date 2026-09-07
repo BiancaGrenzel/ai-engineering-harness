@@ -27,14 +27,14 @@ Canonical layout:
 ```text
 rules/       # persistent agent behavior (canonical)
 skills/      # specialized procedures (canonical)
-docs/        # documentation (includes Tool Registry)
+docs/        # documentation (includes human Tool catalog docs)
 profiles/    # role-specific compositions
 .harness/    # project harness configuration
 schemas/     # JSON Schemas for configuration
 scripts/     # small development utilities
 adapters/    # agent compatibility layer (Cursor first)
-harness/     # thin CLI (validate, generate)
-tools/       # integrations and utilities (planned)
+harness/     # thin CLI (validate, generate, tools health)
+tools/       # Tool Registry (+ planned installers/wrappers)
 ```
 
 Provider-specific output (for example `.cursor/`) is produced by adapters. Canonical resources stay vendor-neutral.
@@ -49,7 +49,7 @@ Provider-specific output (for example `.cursor/`) is produced by adapters. Canon
 | **Profiles** | Reusable default compositions of Rules, Skills, and Tools |
 | **Configuration** | Project selection of a Profile and optional overrides (`.harness/harness.yaml`) |
 
-The **Tool Registry** documents external tools with evidence-based metadata: type, status, security, token/context impact, and agent compatibility. Catalog docs live in [`docs/tools/`](docs/tools/). Runtime integrations under `tools/` are not implemented yet.
+The **Tool Registry** (`tools/registry.yaml`) is the machine-readable catalog of Tool identity and operational metadata. Human documentation lives in [`docs/tools/`](docs/tools/). Read-only Tool Detection and Health are implemented in the CLI (`harness tools health`). Installers and runtime wrappers under `tools/` are not implemented yet.
 
 ## Configuration
 
@@ -87,6 +87,7 @@ python -m harness --help
 python -m harness validate
 python -m harness generate cursor --dry-run
 python -m harness generate cursor
+python -m harness tools health rtk
 python -m harness version
 ```
 
@@ -153,11 +154,12 @@ The Cursor adapter is experimental. Additional agent adapters are not implemente
 | Tool Registry architecture | Done | Catalog, template, evaluation policy, RTK docs |
 | Profiles + `.harness/` configuration | Done | Declarative config, schema, syntax validator |
 | Adapter architecture + Cursor adapter | Done (experimental) | Harness → agent projection |
-| Initial CLI (`validate`, `generate cursor`) | Done | Thin interface over existing APIs |
-| Runtime `tools/` integrations | Not implemented | Installers, wrappers for Tools |
+| Initial CLI (`validate`, `generate cursor`, `tools health`) | Done | Thin interface over existing APIs |
+| Tool Registry + Detection + Health | Done | Declarative catalog; read-only local probes |
+| Runtime Tool installers / wrappers | Not implemented | Install, configure, or package Tools |
 | Additional agent adapters (Claude, Codex, …) | Not implemented | More vendor projections |
-| `harness doctor` / installers / more CLI commands | Not implemented | Operational tooling |
-| MCP, RTK, RAG, observability runtime integrations | Not implemented | External capability wiring |
+| `harness doctor` / more CLI commands | Not implemented | Operational tooling |
+| MCP, RTK wiring, RAG, observability runtime | Not implemented | External capability wiring |
 
 ## License
 

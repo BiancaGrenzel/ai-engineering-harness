@@ -20,7 +20,7 @@ They do not replace:
 
 - Rules (`rules/`)
 - Skills (`skills/`)
-- Tools (`docs/tools/`)
+- Tools (`tools/registry.yaml`, docs in `docs/tools/`)
 - Profiles (`profiles/`)
 - Project config (`.harness/harness.yaml`)
 

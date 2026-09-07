@@ -66,7 +66,8 @@ Canonical resource locations:
 | --- | --- |
 | Rules | `rules/` |
 | Skills | `skills/` |
-| Tools | `docs/tools/` (catalog) |
+| Tools (identity / metadata) | `tools/registry.yaml` |
+| Tools (human documentation) | `docs/tools/` |
 | Profiles | `profiles/` |
 | Project config | `.harness/harness.yaml` |
 
@@ -85,9 +86,10 @@ An Adapter **may**:
 - Read `.harness/harness.yaml`
 - Validate configuration structure (schema)
 - Load and merge the selected Profile
-- Resolve Rule, Skill, and Tool identifiers to canonical paths
+- Resolve Rule and Skill identifiers to canonical paths
+- Resolve Tool identifiers via `tools/registry.yaml` (documentation paths remain under `docs/tools/`)
 - Plan agent-specific files
-- Preflight conflicts (**fail-closed**)
+- Preflight conflicts and path confinement (**fail-closed**)
 - Generate agent-specific files only after a clean preflight
 - Report unsupported capabilities and conflicts
 - Update or remove only Harness-managed generated files
