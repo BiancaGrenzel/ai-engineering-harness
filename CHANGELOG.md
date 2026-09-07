@@ -2,8 +2,25 @@
 
 ## Unreleased
 
+### Changed
+
+- Cursor adapter conflicts are **fail-closed** (preflight before any writes)
+- Cursor Rules default to `alwaysApply: false` with description (Apply Intelligently)
+- `adapter.yaml` is loaded and validated; capabilities must match generator behavior
+- Managed manifest includes `adapter_version` and documents inventory-only role
+- Adapter tests use canonical `schemas/` (no fixture schema copies)
+- Prefer `python -m adapters.cursor.generate` (script path bootstrap retained)
+
 ### Added
 
+- Shared adapter helpers: `adapters/common/metadata.py`, `adapters/common/apply.py`
+- Tests for Profile inherit/replace, fail-closed conflicts, stale removal, metadata/capabilities
+- Cursor adapter Verification Status and Always Apply Policy documentation
+- Adapter architecture
+- Adapter contract
+- Cursor adapter
+- Cursor configuration generator
+- Adapter tests
 - Initial AI Engineering Harness foundation
 - Agent instructions
 - Core Rules architecture

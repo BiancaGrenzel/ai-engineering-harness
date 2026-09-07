@@ -122,6 +122,6 @@ Central catalog: [`registry.md`](registry.md)
 - Automatic installation
 - CLI for the harness
 - MCP server implementations
-- Provider adapters under `.cursor/` or `.claude/`
+- Provider adapters under `.cursor/` or `.claude/` (see [`adapters/`](../../adapters/) for the Cursor generator)
 - Numeric scoring database
 - Automatic Profile → Tool installation wiring

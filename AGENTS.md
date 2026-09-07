@@ -447,6 +447,7 @@ tools/      → integrations and utilities
 profiles/   → role-specific configurations
 .harness/   → harness configuration
 schemas/    → configuration schemas
+adapters/   → agent compatibility generators
 
 ```
 
@@ -458,7 +459,7 @@ Provider-specific directories such as:
 
 ```
 
-should act as adapters whenever possible.
+should be produced by adapters whenever possible.
 
 Do not introduce provider-specific behavior into canonical resources unless there is a clear reason.
 

@@ -10,6 +10,7 @@ Project-local configuration for the AI Engineering Harness.
 | --- | --- |
 | `.harness/harness.yaml` | Declarative desired configuration for this project |
 | `.harness/README.md` | Short practical guide (this file) |
+| `.harness/adapters/` | Optional manifests written by adapters (Harness-managed output inventory) |
 
 Canonical resources stay elsewhere:
 

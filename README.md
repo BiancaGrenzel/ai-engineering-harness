@@ -32,12 +32,11 @@ profiles/    # role-specific compositions
 .harness/    # project harness configuration
 schemas/     # JSON Schemas for configuration
 scripts/     # small development utilities
+adapters/    # agent compatibility layer (Cursor first)
 tools/       # integrations and utilities (planned)
-.cursor/     # Cursor adapter (planned)
-.claude/     # Claude adapter (planned)
 ```
 
-Provider-specific directories act as adapters. Canonical resources stay vendor-neutral.
+Provider-specific output (for example `.cursor/`) is produced by adapters. Canonical resources stay vendor-neutral.
 
 ### Rules, Skills, Tools, Profiles, Configuration
 
@@ -89,13 +88,40 @@ python -m unittest discover -s tests -v
 
 See [AGENTS.md](AGENTS.md) for the full agent instructions, [rules/](rules/) for canonical Rules, and [skills/](skills/) for canonical Skills. The Skills contract is defined in [docs/architecture/skills.md](docs/architecture/skills.md). The Tools contract is defined in [docs/architecture/tools.md](docs/architecture/tools.md). The Configuration contract is defined in [docs/architecture/configuration.md](docs/architecture/configuration.md).
 
+## Adapters
+
+Adapters translate canonical Harness configuration into agent-specific files:
+
+```text
+Harness configuration
+        ↓
+     Adapter
+        ↓
+Agent-specific configuration
+```
+
+`.harness/harness.yaml` remains the source of truth. Adapters must not invert that flow.
+
+| Adapter | Status | Docs |
+| --- | --- | --- |
+| Cursor | experimental | [`adapters/cursor/`](adapters/cursor/) |
+
+Architecture: [`docs/architecture/adapters.md`](docs/architecture/adapters.md) · Contract: [`adapters/ARCHITECTURE.md`](adapters/ARCHITECTURE.md)
+
+Generate Cursor wrappers (no full CLI yet):
+
+```bash
+python -m adapters.cursor.generate
+python -m adapters.cursor.generate --dry-run
+```
+
 ## Supported Environments
 
 The project aims to remain **vendor-neutral**.
 
 It is intended to support multiple agent environments through adapters, including Claude, Cursor, Codex, Gemini, and other compatible agents.
 
-Adapters are not implemented yet.
+The Cursor adapter is experimental. Additional agent adapters are not implemented yet.
 
 ## Roadmap
 
@@ -106,8 +132,9 @@ Adapters are not implemented yet.
 | Skills architecture | Done | Skill contract + core and AI Engineering Skills |
 | Tool Registry architecture | Done | Catalog, template, evaluation policy, RTK docs |
 | Profiles + `.harness/` configuration | Done | Declarative config, schema, syntax validator |
-| Runtime `tools/` integrations | Not implemented | Installers, wrappers, adapters for Tools |
-| Agent adapters (`.cursor/`, `.claude/`, …) | Not implemented | Provider-specific projection |
+| Adapter architecture + Cursor adapter | Done (experimental) | Harness → agent projection |
+| Runtime `tools/` integrations | Not implemented | Installers, wrappers for Tools |
+| Additional agent adapters (Claude, Codex, …) | Not implemented | More vendor projections |
 | CLI / `harness doctor` / installers | Not implemented | Operational tooling |
 | MCP, RTK, RAG, observability runtime integrations | Not implemented | External capability wiring |
 

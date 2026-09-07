@@ -213,6 +213,6 @@ Not created yet:
 - RAG, MCP, or deployment implementation Skills
 - DevOps-only Skills
 - Automatic Skill dependency resolution
-- Provider adapters
+- Additional provider adapters beyond the experimental Cursor adapter
 
-Those can be added later using this contract.
+See [`adapters/`](../adapters/) for projection into agent-specific Skill locations.

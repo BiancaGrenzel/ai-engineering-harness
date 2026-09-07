@@ -217,14 +217,14 @@ Question: Do referenced Profiles, Rules, Skills, and Tools exist and resolve una
 
 Example: `rules: [security]` is semantically valid only if `rules/security/` (or the agreed mapping) exists.
 
-**Not implemented in this phase.** A future CLI may perform semantic resolution and report missing references.
+**Adapter generators** perform semantic resolution when projecting configuration (see [`adapters/common/resolve.py`](../../adapters/common/resolve.py)). A future CLI may expose the same checks directly.
 
 Keep the separation:
 
 | Check | Responsibility |
 | --- | --- |
 | Structure / types / required fields | JSON Schema |
-| Existence / path mapping / duplicates across catalogs | Semantic resolver (future) |
+| Existence / path mapping / duplicates across catalogs | Semantic resolver (adapters today; CLI later) |
 
 ## Schemas
 
