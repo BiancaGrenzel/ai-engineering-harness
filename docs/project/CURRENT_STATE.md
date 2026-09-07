@@ -13,9 +13,9 @@ Snapshot based on the repository working tree on 2026-09-07. Status reflects obs
 | Tool detection | Implemented | Read-only CLI detection library with platform checks, constrained version probes, and transient results. |
 | Tool health | Implemented | Read-only CLI health probe composed with DetectionResult; optional declarative Registry `health` contract; `harness tools health <tool>`. |
 | Cursor adapter | Experimental | Generates a Cursor projection from canonical configuration with fail-closed conflict handling. |
-| CLI | Implemented | Thin `validate`, `generate cursor`, `tools health`, and `version` interface. |
+| Claude adapter | Experimental | Generates a Claude Code projection (`.claude/rules`, `.claude/skills`) without managing `CLAUDE.md`. |
+| CLI | Implemented | Thin `validate`, `generate cursor|claude`, `tools health`, and `version` interface. |
 | Security Profiles | Planned | No security-specific Profile exists; security is currently a selected Rule category. |
-| Claude adapter | Planned | `CLAUDE.md` exists, but no Claude projection/generator exists. |
 
 ## Commands
 
@@ -26,9 +26,12 @@ python scripts/validate-config.py
 python -m harness validate
 python -m harness generate cursor --dry-run
 python -m harness generate cursor
+python -m harness generate claude --dry-run
+python -m harness generate claude
 python -m harness tools health rtk
 python -m harness version
 python -m adapters.cursor.generate --dry-run
+python -m adapters.claude.generate --dry-run
 python -m unittest discover -s tests -q
 ```
 
@@ -36,7 +39,7 @@ python -m unittest discover -s tests -q
 
 ```text
 .harness/       project selection and adapter manifests
-adapters/       vendor-specific projections (Cursor)
+adapters/       vendor-specific projections (Cursor, Claude)
 docs/           architecture, Tool docs, and project context
 harness/        thin CLI and shared runtime code
 profiles/       reusable capability compositions

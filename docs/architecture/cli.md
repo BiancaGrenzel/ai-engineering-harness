@@ -65,6 +65,7 @@ Those belong to each adapter and to `adapters/common/`.
 | --- | --- |
 | `harness validate` | Discover project root; validate `.harness/harness.yaml` against `schemas/harness.schema.json` (syntax only) |
 | `harness generate cursor` | Dispatch to the Cursor adapter generator |
+| `harness generate claude` | Dispatch to the Claude adapter generator |
 | `harness tools health <tool>` | Resolve, detect, and health-check one Tool from `tools/registry.yaml` |
 | `harness version` | Print **Harness** CLI/package version |
 
@@ -81,6 +82,8 @@ Preferred entrypoint (no packaging / publishing in this phase):
 python -m harness validate
 python -m harness generate cursor
 python -m harness generate cursor --dry-run
+python -m harness generate claude
+python -m harness generate claude --dry-run
 python -m harness tools health rtk
 python -m harness version
 ```
@@ -104,7 +107,7 @@ CLI can be invoked without setting `PYTHONPATH`.
 | Flag | Commands | Meaning |
 | --- | --- | --- |
 | `--root PATH` | `validate`, `generate <adapter>`, `tools health` | Explicit project root; skips upward discovery |
-| `--dry-run` | `generate cursor` | Passed through to the adapter; no file writes |
+| `--dry-run` | `generate cursor`, `generate claude` | Passed through to the adapter; no file writes |
 
 ## Exit codes
 
@@ -193,4 +196,5 @@ Prefer keeping the CLI thin. New behavior should land in core/adapters first, th
 - Tool Detection: [`tool-detection.md`](tool-detection.md)
 - Tool Health: [`tool-health.md`](tool-health.md)
 - Cursor adapter: [`../../adapters/cursor/README.md`](../../adapters/cursor/README.md)
+- Claude adapter: [`../../adapters/claude/README.md`](../../adapters/claude/README.md)
 - Package: [`../../harness/`](../../harness/)

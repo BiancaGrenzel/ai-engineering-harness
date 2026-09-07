@@ -6,7 +6,7 @@ This is a direction map derived from the current repository, not a delivery comm
 
 - Foundation: agent instructions, vendor-neutral Rules and Skills, Profiles, declarative configuration and schemas.
 - Tool catalog: Registry contract, documentation standard, validation, and read-only resolution/detection/health primitives.
-- Projection: experimental Cursor adapter and thin CLI entrypoints (`validate`, `generate`, `tools health`, `version`).
+- Projection: experimental Cursor and Claude adapters and thin CLI entrypoints (`validate`, `generate`, `tools health`, `version`).
 
 ## In Progress
 
@@ -15,6 +15,7 @@ This is a direction map derived from the current repository, not a delivery comm
 ## Next
 
 - Reconcile top-level README wording with the committed Tool runtime state where it still understates existing layers.
+- Optional CLAUDE.md management policy only if an explicit, fail-closed product decision is accepted.
 - Add another adapter only when there is a verified target format and a need. It depends on preserving the canonical-content boundary and is optional per vendor.
 
 ## Future

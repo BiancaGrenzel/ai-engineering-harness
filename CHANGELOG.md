@@ -4,6 +4,9 @@
 
 ### Added
 
+- Claude Code adapter (`adapters/claude/`) projecting Rules/Skills into `.claude/`
+- `generate claude` CLI dispatch (`python -m harness generate claude`)
+- Claude adapter tests and fixtures under `tests/adapters/claude/`
 - Initial Harness CLI (`python -m harness`)
 - `validate` command
 - `generate cursor` command

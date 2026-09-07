@@ -123,17 +123,20 @@ Agent-specific configuration
 | Adapter | Status | Docs |
 | --- | --- | --- |
 | Cursor | experimental | [`adapters/cursor/`](adapters/cursor/) |
+| Claude | experimental | [`adapters/claude/`](adapters/claude/) |
 
 Architecture: [`docs/architecture/adapters.md`](docs/architecture/adapters.md) · Contract: [`adapters/ARCHITECTURE.md`](adapters/ARCHITECTURE.md)
 
-Generate Cursor wrappers:
+Generate agent projections:
 
 ```bash
 python -m harness generate cursor
 python -m harness generate cursor --dry-run
-# equivalent adapter entrypoint:
+python -m harness generate claude
+python -m harness generate claude --dry-run
+# equivalent adapter entrypoints:
 python -m adapters.cursor.generate
-python -m adapters.cursor.generate --dry-run
+python -m adapters.claude.generate
 ```
 
 ## Supported Environments
@@ -142,7 +145,7 @@ The project aims to remain **vendor-neutral**.
 
 It is intended to support multiple agent environments through adapters, including Claude, Cursor, Codex, Gemini, and other compatible agents.
 
-The Cursor adapter is experimental. Additional agent adapters are not implemented yet.
+The Cursor and Claude adapters are experimental. Additional agent adapters are not implemented yet.
 
 ## Roadmap
 
@@ -154,10 +157,11 @@ The Cursor adapter is experimental. Additional agent adapters are not implemente
 | Tool Registry architecture | Done | Catalog, template, evaluation policy, RTK docs |
 | Profiles + `.harness/` configuration | Done | Declarative config, schema, syntax validator |
 | Adapter architecture + Cursor adapter | Done (experimental) | Harness → agent projection |
-| Initial CLI (`validate`, `generate cursor`, `tools health`) | Done | Thin interface over existing APIs |
+| Claude adapter | Done (experimental) | Harness → `.claude/` projection |
+| Initial CLI (`validate`, `generate`, `tools health`) | Done | Thin interface over existing APIs |
 | Tool Registry + Detection + Health | Done | Declarative catalog; read-only local probes |
 | Runtime Tool installers / wrappers | Not implemented | Install, configure, or package Tools |
-| Additional agent adapters (Claude, Codex, …) | Not implemented | More vendor projections |
+| Additional agent adapters (Codex, …) | Not implemented | More vendor projections |
 | `harness doctor` / more CLI commands | Not implemented | Operational tooling |
 | MCP, RTK wiring, RAG, observability runtime | Not implemented | External capability wiring |
 

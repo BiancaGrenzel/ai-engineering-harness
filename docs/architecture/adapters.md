@@ -113,7 +113,7 @@ An Adapter **must not**:
 | Belongs to the Harness | Belongs to an Adapter |
 | --- | --- |
 | Rules, Skills, Tools, Profiles | Projection / generation for one agent |
-| `.harness/harness.yaml` | Agent directories such as `.cursor/` |
+| `.harness/harness.yaml` | Agent directories such as `.cursor/` and `.claude/` |
 | Architecture docs and schemas | Adapter metadata and generators |
 
 Core harness code and docs must remain usable without Cursor, Claude, Codex, or any other vendor installed.
@@ -213,7 +213,7 @@ Token counting and RTK integration are **not** implemented in the adapter layer 
 Planned targets (directories not created until implemented):
 
 - Cursor (implemented, experimental)
-- Claude
+- Claude (implemented, experimental)
 - Codex
 - Gemini
 - Other compatible agents
@@ -226,4 +226,5 @@ Each new adapter must follow [`adapters/ARCHITECTURE.md`](../../adapters/ARCHITE
 - [Adapters overview](../../adapters/README.md)
 - [Adapter contract](../../adapters/ARCHITECTURE.md)
 - [Cursor adapter](../../adapters/cursor/README.md)
+- [Claude adapter](../../adapters/claude/README.md)
 - [Common helpers](../../adapters/common/README.md)

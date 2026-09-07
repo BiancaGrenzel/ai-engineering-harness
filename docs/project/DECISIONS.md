@@ -46,19 +46,29 @@ This is an index, not a replacement for architecture documents or ADRs.
 
 ## Adapters
 
-**Decision:** Adapter generation is deterministic and Cursor conflict handling is fail-closed before writes.  
-**Reason:** Generated vendor files must not silently overwrite user-owned state.  
-**Status:** Accepted; Cursor is experimental.  
-**Reference:** `docs/architecture/adapters.md`, `adapters/cursor/README.md`.
+**Decision:** Adapter generation is deterministic and Cursor/Claude conflict handling is fail-closed before writes.
+**Reason:** Generated vendor files must not silently overwrite user-owned state.
+**Status:** Accepted; Cursor and Claude adapters are experimental.
+**Reference:** `docs/architecture/adapters.md`, `adapters/cursor/README.md`, `adapters/claude/README.md`.
 
-**Decision:** Managed adapter paths must resolve strictly under the project root (path confinement in `adapters/common/apply.py`).  
-**Reason:** Fail-closed generation must not write or remove files outside the project.  
-**Status:** Accepted.  
+**Decision:** Claude adapter does not manage or overwrite project `CLAUDE.md`.
+**Reason:** `CLAUDE.md` is commonly user/project-owned always-on instructions; Rules/Skills under `.claude/` are the safer modular projection surfaces.
+**Status:** Accepted for Claude adapter v1.
+**Reference:** `adapters/claude/README.md`.
+
+**Decision:** Claude Rules are materialized under `.claude/rules/harness/` rather than at-path thin wrappers.
+**Reason:** Official at-path imports are documented for `CLAUDE.md`, not verified for `.claude/rules/`; inventing that behavior would be unsafe.
+**Status:** Accepted for Claude adapter v1.
+**Reference:** `adapters/claude/README.md`.
+
+**Decision:** Managed adapter paths must resolve strictly under the project root (path confinement in `adapters/common/apply.py`).
+**Reason:** Fail-closed generation must not write or remove files outside the project.
+**Status:** Accepted.
 **Reference:** `adapters/common/apply.py`, `adapters/ARCHITECTURE.md`.
 
-**Decision:** Adapter Tool identity resolves through `tools/registry.yaml`; `docs/tools/` remains human documentation referenced by Registry `documentation`.  
-**Reason:** Operational Tool identity must not diverge from the Registry.  
-**Status:** Accepted.  
+**Decision:** Adapter Tool identity resolves through `tools/registry.yaml`; `docs/tools/` remains human documentation referenced by Registry `documentation`.
+**Reason:** Operational Tool identity must not diverge from the Registry.
+**Status:** Accepted.
 **Reference:** `adapters/common/resolve.py`, `docs/architecture/adapters.md`.
 
 ## CLI
