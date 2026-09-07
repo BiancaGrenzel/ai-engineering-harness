@@ -16,12 +16,15 @@ Do not put specialized workflows in Rules. Those belong in Skills.
 
 ## Propose a Skill
 
-Skills are not implemented yet. When they are:
+1. Search [skills/](skills/) for a similar Skill first.
+2. Confirm the need is a specialized procedure, not a persistent Rule.
+3. Define one coherent problem class with clear activation criteria.
+4. Copy [skills/SKILL_TEMPLATE.md](skills/SKILL_TEMPLATE.md) and fill every section.
+5. Add minimal frontmatter (`name`, `description`, `category`).
+6. Reference Related Rules and Skills; do not copy their content.
+7. Keep Skills focused, vendor-neutral, and context-efficient. Avoid “do everything” Skills.
 
-1. Search for a similar Skill first.
-2. Define one coherent problem class.
-3. Include purpose, activation criteria, workflow, verification, failure modes, and anti-patterns.
-4. Keep Skills focused. Avoid “do everything” Skills.
+See [docs/architecture/skills.md](docs/architecture/skills.md) and [skills/README.md](skills/README.md).
 
 ## Document a tool
 
@@ -36,7 +39,7 @@ Do not recommend a tool only because it is popular.
 
 ## Avoid duplication
 
-Canonical resources live in `rules/` (and later `skills/`, `docs/`, `tools/`, `profiles/`).
+Canonical resources live in `rules/`, `skills/`, and `docs/` (and later `tools/`, `profiles/`).
 
 Do not create parallel copies in provider adapters unless an adapter mapping is required.
 

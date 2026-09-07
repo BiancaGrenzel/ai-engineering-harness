@@ -11,3 +11,7 @@
 - Security Rules
 - Quality Rules
 - Production Rules
+- Skills architecture contract (`docs/architecture/skills.md`)
+- Skills template and catalog (`skills/`)
+- Core Skills: task-analysis, planning, context-engineering, research, verification
+- AI Engineering Skill: token-optimization
