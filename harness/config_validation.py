@@ -32,14 +32,16 @@ def _require_deps() -> int | None:
     if yaml is None:
         print(
             "Missing dependency: PyYAML. Install with:\n"
-            "  pip install -r scripts/requirements.txt",
+            "  pip install ai-engineering-harness\n"
+            "  # or for local development: pip install -r scripts/requirements.txt",
             file=sys.stderr,
         )
         return 2
     if Draft202012Validator is None:
         print(
             "Missing dependency: jsonschema. Install with:\n"
-            "  pip install -r scripts/requirements.txt",
+            "  pip install ai-engineering-harness\n"
+            "  # or for local development: pip install -r scripts/requirements.txt",
             file=sys.stderr,
         )
         return 2

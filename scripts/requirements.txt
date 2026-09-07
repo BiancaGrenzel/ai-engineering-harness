@@ -1,2 +1,4 @@
+# Runtime dependencies for local development without packaging.
+# Authoritative install metadata lives in pyproject.toml.
 PyYAML>=6.0.1,<7
 jsonschema>=4.22.0,<5

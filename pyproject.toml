@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-engineering-harness"
+dynamic = ["version"]
+description = "Vendor-neutral AI Engineering Harness CLI and adapters"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "See LICENSE" }
+authors = [
+  { name = "AI Engineering Harness contributors" },
+]
+keywords = [
+  "ai",
+  "agents",
+  "harness",
+  "cli",
+  "cursor",
+  "claude",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Software Development",
+]
+dependencies = [
+  "PyYAML>=6.0.1,<7",
+  "jsonschema>=4.22.0,<5",
+]
+
+[project.scripts]
+harness = "harness.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/BiancaGrenzel/ai-engineering-harness"
+Repository = "https://github.com/BiancaGrenzel/ai-engineering-harness"
+
+[tool.setuptools.dynamic]
+version = { attr = "harness.__version__" }
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["harness*", "adapters*"]
+exclude = ["tests*", "scripts*", "docs*", "profiles*", "rules*", "skills*", "tools*"]
+
+[tool.setuptools.package-data]
+"adapters.cursor" = ["adapter.yaml"]
+"adapters.claude" = ["adapter.yaml"]

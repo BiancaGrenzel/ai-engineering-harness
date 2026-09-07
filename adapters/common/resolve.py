@@ -49,12 +49,14 @@ def require_deps() -> None:
     if yaml is None:
         raise ResolutionError(
             "Missing dependency: PyYAML. Install with:\n"
-            "  pip install -r scripts/requirements.txt"
+            "  pip install ai-engineering-harness\n"
+            "  # or for local development: pip install -r scripts/requirements.txt"
         )
     if Draft202012Validator is None:
         raise ResolutionError(
             "Missing dependency: jsonschema. Install with:\n"
-            "  pip install -r scripts/requirements.txt"
+            "  pip install ai-engineering-harness\n"
+            "  # or for local development: pip install -r scripts/requirements.txt"
         )
 
 
