@@ -48,7 +48,7 @@ Canonical resources stay vendor-neutral in the content pack.
 
 | Layer | How it appears | Role |
 | --- | --- | --- |
-| **Installed Engine** | `pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.1` → `harness` + `adapters` + content pack | CLI, resolution, generation, detection, health |
+| **Installed Engine** | `pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ai-engineering-harness==0.1.1` → `harness` + `adapters` + content pack | CLI, resolution, generation, detection, health |
 | **Built-in content pack** | `harness/content/_data` (installed) or repo root (source authoring) | Immutable Profiles, Rules, Skills, Schemas, Tools shipped with the package |
 | **Project content** | `harness init` → `.harness/` (harness.yaml + profiles/rules/skills/schemas/tools/docs) | Project Harness source of truth after init |
 | **Vendor Projection** | `harness generate cursor\|claude` → `.cursor/`, `.claude/` at project root | Self-contained agent-specific generated files |
@@ -106,14 +106,14 @@ python -m venv .venv
 # macOS / Linux
 # source .venv/bin/activate
 
-pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.1
+pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ai-engineering-harness==0.1.1
 harness version
 ```
 
 Without a venv, prefer the module entrypoint (always works if the package is installed for that Python):
 
 ```bash
-pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.1
+pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ai-engineering-harness==0.1.1
 python -m harness version
 ```
 
@@ -125,6 +125,7 @@ pip install .
 ```
 
 Package source: [TestPyPI](https://test.pypi.org/project/ai-engineering-harness/). Production PyPI publishing and release automation are **not** set up yet.
+Dependencies (`PyYAML`, `jsonschema`) are resolved from PyPI; `--extra-index-url` is required for TestPyPI installs. If pip still only offers `0.1.0`, retry with `--no-cache-dir`.
 
 ### Installed invocation
 
@@ -179,7 +180,7 @@ cd my-project
 python -m venv .venv
 # Windows: .\.venv\Scripts\Activate.ps1
 # macOS/Linux: source .venv/bin/activate
-pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.1
+pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ ai-engineering-harness==0.1.1
 harness init --profile software-engineer
 harness validate
 harness generate cursor
