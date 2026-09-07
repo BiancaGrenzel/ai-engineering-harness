@@ -10,7 +10,9 @@ consume the Registry later; they must not become a second source of truth.
 
 Actual installers, wrappers, and integration code (when added later) belong under
 the repository `tools/` directory described in [`AGENTS.md`](../../AGENTS.md).
-This phase adds only the declarative Registry contract.
+Read-only CLI detection is documented in
+[`tool-detection.md`](tool-detection.md); it consumes Registry metadata and does
+not replace this catalog contract.
 
 ## What is a Tool?
 

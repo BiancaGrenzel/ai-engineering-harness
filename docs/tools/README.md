@@ -30,6 +30,11 @@ capabilities, declared platform support, safe detection metadata, and security
 metadata. It must not contain executable code, shell scripts, package-manager
 commands, Adapter logic, runtime state, credentials, or installation automation.
 
+Read-only runtime probing of declared CLI Tools is described in
+[`docs/architecture/tool-detection.md`](../architecture/tool-detection.md).
+Detection observes the local environment; it does not install Tools or rewrite
+the Registry.
+
 The catalog helps agents and humans assess:
 
 - Problem fit

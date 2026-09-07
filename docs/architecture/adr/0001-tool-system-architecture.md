@@ -145,7 +145,8 @@ Tool-specific agent projection remains in the corresponding Adapter.
   assuming a package manager or agent vendor.
 - Security and compatibility can be reported consistently before installation is
   introduced.
-- The Registry schema and runtime contracts remain future work.
+- CLI Tool Detection is a separate, read-only runtime layer over Registry
+  metadata; health, installation, and agent exposure remain future work.
 
 ## Alternatives Considered
 
