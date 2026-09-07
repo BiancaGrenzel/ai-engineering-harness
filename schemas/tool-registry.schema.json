@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-harness.local/schemas/tool-registry.schema.json",
+  "title": "AI Engineering Harness Tool Registry",
+  "description": "Syntax schema for tools/registry.yaml. It validates declarative catalog metadata only; it does not detect, install, configure, or execute Tools.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "tools"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1
+    },
+    "tools": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/tool" }
+    }
+  },
+  "$defs": {
+    "toolId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "description",
+        "kind",
+        "documentation",
+        "capabilities",
+        "security"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/toolId" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "enum": ["cli", "mcp-server", "api", "library", "service"]
+        },
+        "provider": { "type": "string", "minLength": 1 },
+        "homepage": { "type": "string", "format": "uri" },
+        "documentation": {
+          "type": "string",
+          "pattern": "^docs/tools/.+\\.md$"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/toolId" },
+          "uniqueItems": true
+        },
+        "platforms": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/platform" }
+        },
+        "detection": { "$ref": "#/$defs/detection" },
+        "security": { "$ref": "#/$defs/security" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "cli" } } },
+          "then": { "required": ["detection"] }
+        }
+      ]
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "architectures"],
+      "properties": {
+        "os": { "type": "string", "enum": ["linux", "macos", "windows"] },
+        "architectures": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "enum": ["x64", "arm64"] },
+          "uniqueItems": true
+        }
+      }
+    },
+    "detection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executable", "version_arguments"],
+      "properties": {
+        "executable": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+        },
+        "version_arguments": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^-{1,2}[A-Za-z0-9][A-Za-z0-9._-]*$" }
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline_risk"],
+      "properties": {
+        "baseline_risk": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "access": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["command-execution", "filesystem", "network", "secrets", "local-storage"]
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

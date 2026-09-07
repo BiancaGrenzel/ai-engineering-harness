@@ -51,10 +51,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate = sub.add_parser(
         "validate",
-        help="Validate .harness/harness.yaml against the Harness schema",
+        help="Validate Harness configuration and the Tool Registry when present",
         description=(
-            "Validate project Harness configuration (syntax only). "
-            "Uses schemas/harness.schema.json."
+            "Validate project Harness configuration and a provided Tool Registry "
+            "(syntax only). Uses schemas/harness.schema.json and "
+            "schemas/tool-registry.schema.json."
         ),
     )
     validate.add_argument(

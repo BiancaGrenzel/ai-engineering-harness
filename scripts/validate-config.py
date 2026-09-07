@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Validate .harness/harness.yaml against schemas/harness.schema.json.
+"""Validate Harness configuration and the declarative Tool Registry.
 
 Thin wrapper around harness.config_validation (shared with ``harness validate``).
 
-Syntax validation only. Does not resolve whether referenced profiles, rules,
-skills, or tools exist on disk.
+Syntax validation only. It does not detect, install, configure, or execute Tools.
 """
 
 from __future__ import annotations

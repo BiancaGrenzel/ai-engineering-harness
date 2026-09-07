@@ -1,6 +1,7 @@
-# Tool Registry
+# Tool Catalog Index
 
-Central catalog of Tools documented by this harness.
+Human-readable index of Tools documented by this harness. The canonical
+machine-readable Registry is [`tools/registry.yaml`](../../tools/registry.yaml).
 
 Status values follow [`recommendation-policy.md`](recommendation-policy.md).
 Metadata semantics follow [`docs/architecture/tools.md`](../architecture/tools.md).

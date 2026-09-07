@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Validate .harness/harness.yaml against schemas/harness.schema.json.
+"""Validate declarative Harness configuration and Tool Registry documents.
 
-Syntax validation only. Does not resolve whether referenced profiles, rules,
-skills, or tools exist on disk.
+Syntax validation only. It does not detect, install, configure, or execute Tools.
 
 Shared by ``scripts/validate-config.py`` and ``harness validate``.
 """
@@ -69,67 +68,136 @@ def validate_document(instance: object, schema: dict) -> list[str]:
     return [format_error(error) for error in errors]
 
 
-def validate_paths(config_path: Path, schema_path: Path) -> int:
-    """Validate harness.yaml at config_path against schema_path.
+def _validate_paths(document_path: Path, schema_path: Path, label: str) -> tuple[int, object | None]:
+    """Validate one YAML document against a JSON Schema.
 
-    Returns 0 on success, 1 on invalid configuration.
+    Returns an exit code and the parsed document when valid.
     """
     dep_code = _require_deps()
     if dep_code is not None:
-        return dep_code
+        return dep_code, None
 
-    if not config_path.is_file():
-        print(f"Harness configuration is invalid.\n\nConfig not found: {config_path}", file=sys.stderr)
-        return 1
+    if not document_path.is_file():
+        print(f"{label} is invalid.\n\nDocument not found: {document_path}", file=sys.stderr)
+        return 1, None
     if not schema_path.is_file():
-        print(f"Harness configuration is invalid.\n\nSchema not found: {schema_path}", file=sys.stderr)
-        return 1
+        print(f"{label} is invalid.\n\nSchema not found: {schema_path}", file=sys.stderr)
+        return 1, None
 
     try:
-        instance = load_yaml(config_path)
+        instance = load_yaml(document_path)
     except yaml.YAMLError as exc:  # type: ignore[union-attr]
-        print(f"Harness configuration is invalid.\n\nYAML parse error:\n{exc}", file=sys.stderr)
-        return 1
+        print(f"{label} is invalid.\n\nYAML parse error:\n{exc}", file=sys.stderr)
+        return 1, None
 
     if instance is None:
         print(
-            "Harness configuration is invalid.\n\n- (root): document is empty",
+            f"{label} is invalid.\n\n- (root): document is empty",
             file=sys.stderr,
         )
-        return 1
+        return 1, None
 
     try:
         schema = load_json(schema_path)
     except json.JSONDecodeError as exc:
-        print(f"Harness configuration is invalid.\n\nSchema JSON parse error:\n{exc}", file=sys.stderr)
-        return 1
+        print(f"{label} is invalid.\n\nSchema JSON parse error:\n{exc}", file=sys.stderr)
+        return 1, None
 
     if not isinstance(schema, dict):
         print(
-            "Harness configuration is invalid.\n\n- schema: root must be a JSON object",
+            f"{label} is invalid.\n\n- schema: root must be a JSON object",
+            file=sys.stderr,
+        )
+        return 1, None
+
+    messages = validate_document(instance, schema)
+    if messages:
+        print(f"{label} is invalid.\n", file=sys.stderr)
+        print("\n".join(messages), file=sys.stderr)
+        return 1, None
+
+    return 0, instance
+
+
+def validate_paths(config_path: Path, schema_path: Path) -> int:
+    """Validate harness.yaml at config_path against schema_path."""
+    code, _ = _validate_paths(config_path, schema_path, "Harness configuration")
+    if code == 0:
+        print("Harness configuration is valid.")
+    return code
+
+
+def validate_registry_paths(registry_path: Path, schema_path: Path, root: Path) -> int:
+    """Validate the declarative Tool Registry and its documentation references."""
+    code, instance = _validate_paths(registry_path, schema_path, "Tool registry")
+    if code != 0:
+        return code
+
+    assert isinstance(instance, dict)
+    tool_entries = instance["tools"]
+    assert isinstance(tool_entries, list)
+    ids = [entry["id"] for entry in tool_entries]
+    duplicates = sorted({tool_id for tool_id in ids if ids.count(tool_id) > 1})
+    if duplicates:
+        print("Tool registry is invalid.\n", file=sys.stderr)
+        print(f"- tools: duplicate id(s): {', '.join(duplicates)}", file=sys.stderr)
+        return 1
+
+    docs_root = (root / "docs" / "tools").resolve()
+    invalid_docs = []
+    for entry in tool_entries:
+        doc_path = (root / entry["documentation"]).resolve()
+        if not doc_path.is_relative_to(docs_root) or not doc_path.is_file():
+            invalid_docs.append(entry["documentation"])
+    if invalid_docs:
+        print("Tool registry is invalid.\n", file=sys.stderr)
+        print(
+            f"- documentation: referenced file(s) not found or outside docs/tools: {', '.join(invalid_docs)}",
             file=sys.stderr,
         )
         return 1
 
-    messages = validate_document(instance, schema)
-    if messages:
-        print("Harness configuration is invalid.\n", file=sys.stderr)
-        print("\n".join(messages), file=sys.stderr)
-        return 1
-
-    print("Harness configuration is valid.")
+    print("Tool registry is valid.")
     return 0
+
+
+def validate_repository(root: Path) -> int:
+    """Validate project configuration and a Registry when the project provides one."""
+    config_code = validate_paths(
+        root / ".harness" / "harness.yaml", root / "schemas" / "harness.schema.json"
+    )
+    if config_code != 0:
+        return config_code
+
+    registry_path = root / "tools" / "registry.yaml"
+    if not registry_path.is_file():
+        return 0
+    return validate_registry_paths(
+        registry_path, root / "schemas" / "tool-registry.schema.json", root
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Validate harness.yaml against the Harness JSON Schema (syntax only)."
+        description="Validate Harness configuration and, when present, the Tool Registry."
     )
     parser.add_argument(
         "--config",
         type=Path,
         default=None,
         help="Path to harness.yaml (default: <repo>/.harness/harness.yaml)",
+    )
+    parser.add_argument(
+        "--registry",
+        type=Path,
+        default=None,
+        help="Path to tools/registry.yaml (validates the Registry instead of harness.yaml)",
+    )
+    parser.add_argument(
+        "--registry-schema",
+        type=Path,
+        default=None,
+        help="Path to Tool Registry JSON Schema",
     )
     parser.add_argument(
         "--schema",
@@ -143,6 +211,12 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     root = repo_root_from_script()
+    if args.registry is not None or args.registry_schema is not None:
+        registry_path = args.registry or (root / "tools" / "registry.yaml")
+        schema_path = args.registry_schema or (root / "schemas" / "tool-registry.schema.json")
+        return validate_registry_paths(registry_path.resolve(), schema_path.resolve(), root)
+    if args.config is None and args.schema is None:
+        return validate_repository(root)
     config_path = args.config or (root / ".harness" / "harness.yaml")
     schema_path = args.schema or (root / "schemas" / "harness.schema.json")
     return validate_paths(config_path.resolve(), schema_path.resolve())

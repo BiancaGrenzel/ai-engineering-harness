@@ -14,9 +14,23 @@ They may be CLIs, libraries, SDKs, MCP servers, services, platforms, frameworks,
 
 The catalog distinguishes those types. A protocol is not a platform. A CLI is not an MCP server.
 
-## Why a Tool Registry?
+## Tool Registry
 
-Agents and humans need a shared, evidence-based inventory of capabilities that considers:
+[`tools/registry.yaml`](../../tools/registry.yaml) is the canonical,
+machine-readable catalog of operational Tool metadata. It supports deterministic
+validation and future resolution without becoming an installer, runtime, or
+agent-specific configuration file.
+
+`docs/tools/` remains the human-readable source for explanation, evidence,
+rationale, limitations, and guidance. The Registry points to the relevant Tool
+page; documentation must not become a second operational schema.
+
+The Registry records a Tool's stable identity, minimal kind, documentation path,
+capabilities, declared platform support, safe detection metadata, and security
+metadata. It must not contain executable code, shell scripts, package-manager
+commands, Adapter logic, runtime state, credentials, or installation automation.
+
+The catalog helps agents and humans assess:
 
 - Problem fit
 - Security and privacy
@@ -24,9 +38,7 @@ Agents and humans need a shared, evidence-based inventory of capabilities that c
 - Compatibility
 - Maintenance and reversibility
 
-Without a registry, Tool advice becomes folklore: popular names, unverified claims, and accidental vendor lock-in.
-
-The registry optimizes for **useful entries**, not entry count.
+The Registry optimizes for **useful entries**, not entry count.
 
 ## Tool vs Skill
 
@@ -67,7 +79,11 @@ Example: “Prefer filtered tool output” is a Rule. A filtering CLI is a Tool 
 
 ## Tool metadata
 
-Every documented Tool should follow [`TOOL_TEMPLATE.md`](TOOL_TEMPLATE.md) and the metadata model in [`docs/architecture/tools.md`](../architecture/tools.md).
+The Registry contract is defined by
+[`schemas/tool-registry.schema.json`](../../schemas/tool-registry.schema.json).
+Every documented Tool should follow [`TOOL_TEMPLATE.md`](TOOL_TEMPLATE.md) for
+human-facing content and the metadata model in
+[`docs/architecture/tools.md`](../architecture/tools.md).
 
 Unknown facts stay unknown.
 
@@ -77,7 +93,11 @@ Before recommending a Tool, evaluate it with [`evaluation.md`](evaluation.md).
 
 ## Security considerations
 
-Classify security using the criteria in the architecture doc. Popular Tools with broad execution or network reach are not automatically low risk.
+Registry `security.baseline_risk` classifies a Tool's normal documented behavior,
+not its effective risk in a particular environment. Access metadata describes
+potential reach; it is not an authorization grant. Provenance and trust remain
+future metadata separate from access and baseline risk. Popular Tools with broad
+execution or network reach are not automatically low risk.
 
 ## Token/context considerations
 
@@ -108,14 +128,30 @@ Optional Integration
 3. Evaluate with [`evaluation.md`](evaluation.md).
 4. Create `docs/tools/<category>/<tool>.md` from [`TOOL_TEMPLATE.md`](TOOL_TEMPLATE.md).
 5. Classify type, maturity, status, token/context impact, security, compatibility.
-6. Add a row to [`registry.md`](registry.md).
+6. Add a declarative entry to [`tools/registry.yaml`](../../tools/registry.yaml)
+   that references the new documentation page.
 7. Update the category README if needed.
 8. Apply [`recommendation-policy.md`](recommendation-policy.md) before setting `recommended`.
 9. Do **not** add installers or adapters in the documentation-only phase unless explicitly requested.
 
-## Registry
+## Example
 
-Central catalog: [`registry.md`](registry.md)
+The RTK entry demonstrates the minimum CLI metadata without installing or
+configuring RTK:
+
+```yaml
+- id: rtk
+  name: RTK
+  kind: cli
+  documentation: docs/tools/token/rtk.md
+  capabilities: [token-reduction, command-wrapping, output-compression]
+  detection:
+    executable: rtk
+    version_arguments: [--version]
+```
+
+The full entry is in [`tools/registry.yaml`](../../tools/registry.yaml). Its
+human-facing evidence and limitations are in [`token/rtk.md`](token/rtk.md).
 
 ## Out of scope for this phase
 

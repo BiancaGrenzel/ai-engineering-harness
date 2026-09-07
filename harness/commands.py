@@ -17,16 +17,14 @@ def cmd_version(_args: object) -> int:
 
 
 def cmd_validate(args: object) -> int:
-    """Validate ``.harness/harness.yaml`` using the shared config validator."""
+    """Validate Harness configuration and the project Tool Registry when present."""
     try:
         root = resolve_root_arg(getattr(args, "root", None))
     except FileNotFoundError as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
-    config_path = root / ".harness" / "harness.yaml"
-    schema_path = root / "schemas" / "harness.schema.json"
-    return config_validation.validate_paths(config_path, schema_path)
+    return config_validation.validate_repository(root)
 
 
 def cmd_generate(args: object) -> int:

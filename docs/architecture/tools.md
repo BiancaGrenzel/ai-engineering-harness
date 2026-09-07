@@ -2,9 +2,15 @@
 
 Official standard for documenting and classifying Tools in the AI Engineering Harness.
 
-Canonical Tool documentation lives in [`docs/tools/`](../tools/). This document defines the metadata model, taxonomies, and evaluation posture. Provider adapters and runtime integrations may consume this catalog later; they must not become a second source of truth.
+Canonical operational Tool metadata lives in
+[`tools/registry.yaml`](../../tools/registry.yaml). Canonical Tool documentation
+lives in [`docs/tools/`](../tools/). This document defines the metadata model,
+taxonomies, and evaluation posture. Provider adapters and runtime integrations may
+consume the Registry later; they must not become a second source of truth.
 
-Actual installers, wrappers, and integration code (when added later) belong under the repository `tools/` directory described in [`AGENTS.md`](../../AGENTS.md). This phase documents Tools only.
+Actual installers, wrappers, and integration code (when added later) belong under
+the repository `tools/` directory described in [`AGENTS.md`](../../AGENTS.md).
+This phase adds only the declarative Registry contract.
 
 ## What is a Tool?
 
@@ -63,9 +69,12 @@ See [`docs/tools/evaluation.md`](../tools/evaluation.md) and [`docs/tools/recomm
 
 Existence in documentation is not a recommendation. Status must be explicit.
 
-## Metadata model
+## Documentation metadata model
 
-Tool pages may include a YAML frontmatter block for discovery. Body content follows [`docs/tools/TOOL_TEMPLATE.md`](../tools/TOOL_TEMPLATE.md).
+`tools/registry.yaml` is the machine-readable metadata source. The frontmatter
+below is documentation metadata for Tool pages, whose body follows
+[`docs/tools/TOOL_TEMPLATE.md`](../tools/TOOL_TEMPLATE.md). It must not be treated
+as a second operational Registry.
 
 ### Format
 
@@ -255,6 +264,13 @@ Record one or more characteristics in prose or metadata:
 Agents should prefer Tools whose output profile matches the current context budget.
 
 ## Security classification
+
+The Registry records `security.baseline_risk`: a catalog-level classification of
+the Tool's normal documented behavior and potential blast radius. It is not the
+effective risk of a particular machine, target, credential set, or execution mode.
+Future runtime observations may report effective risk separately; they must not
+rewrite Registry metadata. Provenance and trust are future concerns separate from
+both access surface and baseline risk.
 
 | Level | Criteria (any strong match can raise the level) |
 | --- | --- |

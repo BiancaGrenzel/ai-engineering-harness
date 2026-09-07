@@ -1,0 +1,33 @@
+# Canonical machine-readable metadata for known Harness Tools.
+# This catalog is declarative data only; it does not execute, install, or configure Tools.
+
+version: 1
+tools:
+  - id: rtk
+    name: RTK
+    description: CLI proxy that filters and compresses command output before it reaches an LLM context.
+    kind: cli
+    provider: rtk-ai
+    homepage: https://www.rtk-ai.app/
+    documentation: docs/tools/token/rtk.md
+    capabilities:
+      - token-reduction
+      - command-wrapping
+      - output-compression
+    platforms:
+      - os: linux
+        architectures: [x64, arm64]
+      - os: macos
+        architectures: [x64, arm64]
+      - os: windows
+        architectures: [x64]
+    detection:
+      executable: rtk
+      version_arguments: [--version]
+    security:
+      baseline_risk: medium
+      access:
+        - command-execution
+        - filesystem
+        - network
+        - local-storage
