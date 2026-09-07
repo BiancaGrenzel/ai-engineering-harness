@@ -1,0 +1,24 @@
+# Software Engineer profile — generic composition for software engineering work.
+# Schema: schemas/profile.schema.json
+# This profile is stack-agnostic (not tied to a language, framework, or cloud).
+
+name: software-engineer
+description: Generic software engineering composition of core Rules, Skills, and token-efficient tooling.
+
+rules:
+  - core
+  - context
+  - security
+  - quality
+  - production
+
+skills:
+  - task-analysis
+  - planning
+  - context-engineering
+  - research
+  - verification
+  - token-optimization
+
+tools:
+  - rtk
