@@ -1,0 +1,28 @@
+# Project Harness configuration.
+# Schema: schemas/harness.schema.json
+# Architecture: docs/architecture/configuration.md
+#
+# Profile provides defaults. Lists below match the software-engineer profile
+# and document this repository's selected capabilities explicitly.
+# Omitting a list would inherit that list from the Profile instead.
+
+version: 1
+profile: software-engineer
+
+rules:
+  - core
+  - context
+  - security
+  - quality
+  - production
+
+skills:
+  - task-analysis
+  - planning
+  - context-engineering
+  - research
+  - verification
+  - token-optimization
+
+tools:
+  - rtk
