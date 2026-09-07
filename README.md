@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.png" alt="AI Engineering Harness logo" width="160" />
+</p>
+
 # AI Engineering Harness
 
 A vendor-neutral foundation for using AI agents in software engineering and related technical disciplines.
