@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-harness.local/schemas/harness.schema.json",
+  "title": "AI Engineering Harness Configuration",
+  "description": "Syntax schema for .harness/harness.yaml. Validates structure only; does not resolve whether referenced profiles, rules, skills, or tools exist.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "profile"],
+  "properties": {
+    "version": {
+      "description": "Harness configuration format version. Increment when the configuration contract changes incompatibly.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1
+    },
+    "profile": {
+      "description": "Profile identifier (kebab-case). Semantic resolution checks that profiles/<name>.yaml exists.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "rules": {
+      "description": "When present, replaces the Profile rules list entirely. When omitted, Profile rules are used.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resourceName"
+      },
+      "uniqueItems": true
+    },
+    "skills": {
+      "description": "When present, replaces the Profile skills list entirely. When omitted, Profile skills are used.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resourceName"
+      },
+      "uniqueItems": true
+    },
+    "tools": {
+      "description": "When present, replaces the Profile tools list entirely. When omitted, Profile tools are used. Entries may be a name string or an object with optional metadata.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/toolEntry"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "resourceName": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "toolEntry": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "config": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

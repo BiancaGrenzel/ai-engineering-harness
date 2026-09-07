@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-engineering-harness.local/schemas/profile.schema.json",
+  "title": "AI Engineering Harness Profile",
+  "description": "Syntax schema for profiles/<name>.yaml. Validates structure only; does not resolve whether referenced rules, skills, or tools exist.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "rules", "skills", "tools"],
+  "properties": {
+    "name": {
+      "description": "Stable profile identifier. Must match the filename stem (profiles/<name>.yaml).",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "description": {
+      "description": "Short human-readable summary of the profile's intended work type.",
+      "type": "string",
+      "minLength": 1
+    },
+    "rules": {
+      "description": "Default Rule category identifiers composed by this profile.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resourceName"
+      },
+      "uniqueItems": true
+    },
+    "skills": {
+      "description": "Default Skill identifiers composed by this profile.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resourceName"
+      },
+      "uniqueItems": true
+    },
+    "tools": {
+      "description": "Default Tool identifiers composed by this profile.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/toolEntry"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "resourceName": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "toolEntry": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "config": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
