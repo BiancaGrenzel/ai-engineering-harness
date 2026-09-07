@@ -1,0 +1,75 @@
+# AI Engineering Harness
+
+A vendor-neutral foundation for using AI agents in software engineering and related technical disciplines.
+
+## What is this?
+
+An **AI Engineering Harness** is a reusable architecture for agent-assisted work.
+
+It organizes persistent behavior, specialized procedures, tools, security controls, and operational practices so agents can work more reliably across projects and environments.
+
+This is not a giant prompt collection. It is a structured harness based on Context Engineering, Rules, Skills, Tools, MCP, security, evaluation, observability, and production practices.
+
+## Goals
+
+- Context efficiency
+- Reusable agent behavior
+- Tool integration
+- Security
+- Evaluation
+- Observability
+- Production readiness
+
+## Architecture
+
+Canonical layout (target):
+
+```text
+rules/       # persistent agent behavior (canonical)
+skills/      # specialized procedures (planned)
+docs/        # documentation (planned)
+tools/       # integrations and utilities (planned)
+profiles/    # role-specific compositions (planned)
+.harness/    # harness configuration (planned)
+.cursor/     # Cursor adapter (planned)
+.claude/     # Claude adapter (planned)
+```
+
+Provider-specific directories act as adapters. Canonical resources stay vendor-neutral.
+
+## Principles
+
+- Understand before modifying
+- Make the minimal sufficient change
+- Reuse before creating
+- Do not invent APIs, paths, or capabilities
+- Load minimum sufficient context
+- Prefer least privilege
+- Verify before claiming success
+- Keep the harness useful across agents and disciplines
+
+See [AGENTS.md](AGENTS.md) for the full agent instructions and [rules/](rules/) for canonical Rules.
+
+## Supported Environments
+
+The project aims to remain **vendor-neutral**.
+
+It is intended to support multiple agent environments through adapters, including Claude, Cursor, Codex, Gemini, and other compatible agents.
+
+Adapters are not implemented yet.
+
+## Roadmap
+
+| Phase | Status | Focus |
+| --- | --- | --- |
+| Agent instructions (`AGENTS.md`, `CLAUDE.md`) | Done | Project principles and agent entrypoint |
+| Rules foundation | Done | Canonical Rules + project docs |
+| Skills architecture | Not implemented | Specialized procedures |
+| Docs, tools, profiles, `.harness/` | Not implemented | Broader harness structure |
+| Agent adapters (`.cursor/`, `.claude/`, …) | Not implemented | Provider-specific projection |
+| CLI / `harness doctor` / installers | Not implemented | Operational tooling |
+| MCP, RTK, RAG, observability integrations | Not implemented | External capabilities |
+
+## License
+
+See [LICENSE](LICENSE).
