@@ -9,7 +9,7 @@ Profile Resolution
         ↓
 adapter.yaml (capabilities)
         ↓
-Plan (.mdc / SKILL wrappers)
+Plan (.mdc / SKILL projections)
         ↓
 Preflight (fail-closed)
         ↓
@@ -23,17 +23,17 @@ Apply
 ## What it does
 
 1. Loads and validates `adapters/cursor/adapter.yaml`
-2. Reads `.harness/harness.yaml`
-3. Validates structure against Harness schemas
-4. Loads the selected Profile and merges lists (omit → inherit; present → replace)
-5. Resolves Rules, Skills, and Tools to canonical paths
-6. Plans thin wrappers for Cursor Rules and Skills using declared output paths
+2. Reads `.harness/harness.yaml` (project intent)
+3. Validates structure against content-pack Harness schemas
+4. Loads the selected Profile from the content pack and merges lists (omit → inherit; present → replace)
+5. Resolves Rules, Skills, and Tools from the content pack
+6. Plans self-contained Cursor Rules and Skills using declared output paths
 7. Verifies planned kinds match supported capabilities
 8. Prefights conflicts (**fail-closed** — no writes if any conflict)
 9. Warns for Tools (selected but not projected)
 10. Applies writes and refreshes the managed manifest
 
-Canonical content stays in `rules/` and `skills/`. Generated Cursor files are a representation, not a second source of truth.
+Canonical content stays in the content pack (or this repository when developing from source). Generated Cursor files are self-contained projections.
 
 ## Supported
 
@@ -188,7 +188,7 @@ Re-running the generator with the same harness config regenerates the same manag
 .harness/adapters/cursor.managed.json
 ```
 
-Example Rule wrapper shape:
+Example Rule projection shape (self-contained body):
 
 ```markdown
 ---
@@ -198,10 +198,12 @@ alwaysApply: false
 
 <!-- ai-engineering-harness:managed -->
 
-Follow the canonical Harness Rule referenced below. Do not treat this wrapper as a second source of truth.
-
-@rules/core/core.md
+# Core Principles
+...
 ```
+
+Generated Skills likewise embed the Skill workflow body. They do **not** depend on
+project-local `rules/` or `skills/` trees.
 
 ## Usage
 

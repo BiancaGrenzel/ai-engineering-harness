@@ -40,7 +40,7 @@ Canonical content stays in `rules/` and `skills/`. Generated Claude files are a 
 | Capability | Projection |
 | --- | --- |
 | Rules | `.claude/rules/harness/<category>--<stem>.md` materialized projections of canonical Rule markdown |
-| Skills | `.claude/skills/<skill-id>/SKILL.md` thin wrappers that point at canonical `skills/**/SKILL.md` |
+| Skills | `.claude/skills/<skill-id>/SKILL.md` self-contained Skills (frontmatter + workflow body) |
 
 Declared in `adapter.yaml` and enforced by the generator.
 
@@ -109,8 +109,8 @@ Optional per-Rule `paths` when canonical metadata or adapter policy maps exist.
 | Materialized Rule body under `.claude/rules/harness/` | **Used** | Reliable load at launch; regenerate to sync; higher drift risk than references |
 | Thin Rule wrapper + `@path` import | **Not used** | `@path` imports are documented for **CLAUDE.md**, not verified for `.claude/rules/` |
 | Symlink canonical Rules into `.claude/rules/` | **Not used** | Officially supported for rules, but poor Windows/CI portability (same rationale as Cursor) |
-| Thin Skill wrapper pointing at canonical path | **Used**; agent must open the canonical file | Low drift; not a native remote skill path |
-| Materialized full Skill copy | Not used | Higher reliability if wrappers are ignored; higher drift |
+| Thin Skill wrapper pointing at project-local canonical path | **Not used** | Consumer projects no longer carry `skills/` |
+| Materialized full Skill copy | **Used** | Self-contained after generation; regenerate after Harness upgrades |
 | Managing `CLAUDE.md` with `@` imports of Rules | **Not used** | Avoids overwriting project/user CLAUDE.md |
 
 If Claude later documents `@path` expansion inside `.claude/rules/` equivalently to CLAUDE.md, revisit thin Rule references — do not invent unsupported APIs.
