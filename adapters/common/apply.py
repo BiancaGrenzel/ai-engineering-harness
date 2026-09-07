@@ -8,6 +8,7 @@ manifest inventory handling. Agent-specific rendering stays in each adapter.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -16,6 +17,14 @@ from adapters.common.resolve import (
     is_harness_managed,
     read_text_if_exists,
 )
+
+# Drive-letter and UNC forms that Path.is_absolute() may miss on non-Windows hosts.
+_WINDOWS_ABS_RE = re.compile(r"^[A-Za-z]:[\\/]")
+_UNC_RE = re.compile(r"^[/\\]{2}")
+
+
+class PathConfinementError(ValueError):
+    """Raised when a planned or managed path would escape the project root."""
 
 
 @dataclass(frozen=True)
@@ -42,6 +51,47 @@ class GenerationReport:
     @property
     def has_failures(self) -> bool:
         return bool(self.errors or self.conflicts)
+
+
+def confined_path(root: Path, relative_path: str) -> Path:
+    """Resolve ``relative_path`` under ``root`` or raise ``PathConfinementError``.
+
+    Rejects absolute paths, drive/UNC forms, and any path that resolves outside
+    ``root`` (including ``..`` traversal and symlink escapes after resolve).
+    """
+    if not isinstance(relative_path, str) or not relative_path.strip():
+        raise PathConfinementError(f"Invalid managed path: {relative_path!r}")
+
+    raw = relative_path.strip()
+    candidate = Path(raw)
+
+    if candidate.is_absolute() or _WINDOWS_ABS_RE.match(raw) or _UNC_RE.match(raw):
+        raise PathConfinementError(
+            f"Absolute or non-relative managed path rejected: {relative_path}"
+        )
+
+    root_resolved = root.resolve()
+    full = (root_resolved / raw).resolve()
+    try:
+        full.relative_to(root_resolved)
+    except ValueError as exc:
+        raise PathConfinementError(
+            f"Managed path escapes project root: {relative_path}"
+        ) from exc
+    return full
+
+
+def assert_under_root(root: Path, path: Path, *, label: str) -> Path:
+    """Ensure an absolute-ish ``path`` resolves inside ``root``."""
+    root_resolved = root.resolve()
+    full = path.resolve()
+    try:
+        full.relative_to(root_resolved)
+    except ValueError as exc:
+        raise PathConfinementError(
+            f"{label} escapes project root: {path}"
+        ) from exc
+    return full
 
 
 def default_manifest(
@@ -111,7 +161,7 @@ def detect_write_conflicts(root: Path, planned: list[PlannedFile]) -> list[str]:
     """Return relative paths that exist and are not Harness-managed."""
     conflicts: list[str] = []
     for item in planned:
-        path = root / item.relative_path
+        path = confined_path(root, item.relative_path)
         existing = read_text_if_exists(path)
         if existing is None:
             continue
@@ -126,12 +176,17 @@ def plan_stale_removals(
     *,
     previous_files: list[str],
     desired_files: set[str],
-) -> tuple[list[str], list[str]]:
-    """Return (removable managed paths, warnings for unmanaged stale paths)."""
+) -> tuple[list[str], list[str], list[str]]:
+    """Return (removable, warnings, confinement_errors)."""
     removable: list[str] = []
     warnings: list[str] = []
+    errors: list[str] = []
     for rel in sorted(set(previous_files) - desired_files):
-        path = root / rel
+        try:
+            path = confined_path(root, rel)
+        except PathConfinementError as exc:
+            errors.append(str(exc))
+            continue
         existing = read_text_if_exists(path)
         if existing is None:
             continue
@@ -142,7 +197,7 @@ def plan_stale_removals(
             )
             continue
         removable.append(rel)
-    return removable, warnings
+    return removable, warnings, errors
 
 
 def preflight(
@@ -154,15 +209,33 @@ def preflight(
     """Detect conflicts and classify planned actions without writing files.
 
     Fail-closed: callers must not apply when report.has_failures is true.
+    Invalid paths (escapes, absolute) are errors and prevent apply.
     """
     report = GenerationReport()
     desired = {item.relative_path for item in planned}
+
+    for item in planned:
+        try:
+            confined_path(root, item.relative_path)
+        except PathConfinementError as exc:
+            report.errors.append(str(exc))
+
+    if report.errors:
+        # Still check stale previous_files for additional confinement errors.
+        _removable, _warnings, stale_errors = plan_stale_removals(
+            root,
+            previous_files=previous_files,
+            desired_files=desired,
+        )
+        report.errors.extend(stale_errors)
+        return report
+
     report.conflicts.extend(detect_write_conflicts(root, planned))
 
     for item in planned:
         if item.relative_path in report.conflicts:
             continue
-        path = root / item.relative_path
+        path = confined_path(root, item.relative_path)
         existing = read_text_if_exists(path)
         if existing is None:
             report.created.append(item.relative_path)
@@ -171,13 +244,14 @@ def preflight(
         else:
             report.updated.append(item.relative_path)
 
-    removable, stale_warnings = plan_stale_removals(
+    removable, stale_warnings, stale_errors = plan_stale_removals(
         root,
         previous_files=previous_files,
         desired_files=desired,
     )
     report.removed.extend(removable)
     report.warnings.extend(stale_warnings)
+    report.errors.extend(stale_errors)
     return report
 
 
@@ -193,19 +267,20 @@ def apply_preflighted_plan(
 ) -> None:
     """Write planned outputs after a successful preflight.
 
-    Raises AssertionError if called when conflicts exist (programming error).
+    Raises AssertionError if called when conflicts or path errors exist.
     """
-    if report.conflicts:
+    if report.has_failures:
         raise AssertionError(
-            "refuse to apply when conflicts exist (fail-closed); "
+            "refuse to apply when conflicts or path errors exist (fail-closed); "
             "run preflight and abort before apply"
         )
 
     desired = {item.relative_path for item in planned}
     managed_written: list[str] = []
+    safe_manifest = assert_under_root(root, manifest_path, label="managed manifest")
 
     for item in planned:
-        path = root / item.relative_path
+        path = confined_path(root, item.relative_path)
         if item.relative_path in report.unchanged:
             managed_written.append(item.relative_path)
             continue
@@ -217,17 +292,27 @@ def apply_preflighted_plan(
         managed_written.append(item.relative_path)
 
     for rel in report.removed:
+        path = confined_path(root, rel)
         if dry_run:
             continue
-        path = root / rel
         if path.is_file():
             path.unlink()
             parent = path.parent
-            if parent.name and parent != root and parent.is_dir() and not any(parent.iterdir()):
+            root_resolved = root.resolve()
+            if (
+                parent.name
+                and parent != root_resolved
+                and parent.is_dir()
+                and not any(parent.iterdir())
+            ):
+                try:
+                    parent.relative_to(root_resolved)
+                except ValueError:
+                    continue
                 parent.rmdir()
 
     write_manifest(
-        manifest_path,
+        safe_manifest,
         sorted(set(managed_written) & desired),
         adapter=adapter,
         adapter_version=adapter_version,
