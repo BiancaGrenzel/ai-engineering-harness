@@ -75,7 +75,7 @@ exposure can differ independently.
 | Runtime | `absent`, `detected` |
 | Compatibility | `unknown`, `compatible`, `incompatible` |
 | Configuration | `not-required`, `unconfigured`, `configured` |
-| Health | `not-applicable`, `unknown`, `healthy`, `unhealthy` |
+| Health | `unsupported`, `unavailable`, `healthy`, `unhealthy`, `timeout`, `error` |
 | Exposure | `unavailable`, `available` |
 
 For example, a Tool can be declared but absent, detected but incompatible, or
@@ -91,6 +91,11 @@ health check is separate from detection and must not be assumed from a binary be
 present.
 
 `detected != healthy`; `healthy != safe`; and `healthy != exposed to an agent`.
+
+CLI Detection and CLI Health are implemented as separate read-only runtime layers
+over Registry metadata. Health composes `DetectionResult` and uses an optional
+declarative `health` contract; it does not reuse `detection.version_arguments`
+automatically. Installation and agent exposure remain future work.
 
 ## Installation Boundary
 
@@ -146,7 +151,10 @@ Tool-specific agent projection remains in the corresponding Adapter.
 - Security and compatibility can be reported consistently before installation is
   introduced.
 - CLI Tool Detection is a separate, read-only runtime layer over Registry
-  metadata; health, installation, and agent exposure remain future work.
+  metadata.
+- CLI Tool Health is a separate, read-only runtime layer that composes Detection
+  results and optional declarative health probes.
+- Installation and agent exposure remain future work.
 
 ## Alternatives Considered
 

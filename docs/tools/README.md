@@ -26,14 +26,17 @@ rationale, limitations, and guidance. The Registry points to the relevant Tool
 page; documentation must not become a second operational schema.
 
 The Registry records a Tool's stable identity, minimal kind, documentation path,
-capabilities, declared platform support, safe detection metadata, and security
-metadata. It must not contain executable code, shell scripts, package-manager
-commands, Adapter logic, runtime state, credentials, or installation automation.
+capabilities, declared platform support, safe detection metadata, optional
+declarative health probe metadata, and security metadata. It must not contain
+executable code, shell scripts, package-manager commands, Adapter logic, runtime
+state, credentials, or installation automation.
 
 Read-only runtime probing of declared CLI Tools is described in
 [`docs/architecture/tool-detection.md`](../architecture/tool-detection.md).
-Detection observes the local environment; it does not install Tools or rewrite
-the Registry.
+Detection observes whether a Tool is present. Health checking is described in
+[`docs/architecture/tool-health.md`](../architecture/tool-health.md) and observes
+whether a detected Tool responds to a safe declarative probe. Neither installs
+Tools nor rewrites the Registry.
 
 The catalog helps agents and humans assess:
 
@@ -153,16 +156,22 @@ configuring RTK:
   detection:
     executable: rtk
     version_arguments: [--version]
+  health:
+    kind: cli
+    arguments: [--version]
 ```
 
 The full entry is in [`tools/registry.yaml`](../../tools/registry.yaml). Its
 human-facing evidence and limitations are in [`token/rtk.md`](token/rtk.md).
+The RTK `health` block is a minimal local liveness probe only; exit code 0 does
+not prove wrapping or token-reduction behavior.
 
 ## Out of scope for this phase
 
 - Automatic installation
-- CLI for the harness
 - MCP server implementations
 - Provider adapters under `.cursor/` or `.claude/` (see [`adapters/`](../../adapters/) for the Cursor generator)
 - Numeric scoring database
 - Automatic Profile → Tool installation wiring
+- Effective risk / provenance / trust engines
+- Remote or network health probes

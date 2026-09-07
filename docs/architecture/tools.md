@@ -11,8 +11,9 @@ consume the Registry later; they must not become a second source of truth.
 Actual installers, wrappers, and integration code (when added later) belong under
 the repository `tools/` directory described in [`AGENTS.md`](../../AGENTS.md).
 Read-only CLI detection is documented in
-[`tool-detection.md`](tool-detection.md); it consumes Registry metadata and does
-not replace this catalog contract.
+[`tool-detection.md`](tool-detection.md); read-only health checking is documented
+in [`tool-health.md`](tool-health.md). Both consume Registry metadata and do not
+replace this catalog contract.
 
 ## What is a Tool?
 
@@ -272,7 +273,8 @@ the Tool's normal documented behavior and potential blast radius. It is not the
 effective risk of a particular machine, target, credential set, or execution mode.
 Future runtime observations may report effective risk separately; they must not
 rewrite Registry metadata. Provenance and trust are future concerns separate from
-both access surface and baseline risk.
+both access surface and baseline risk. Tool Health may observe local process
+liveness, but healthy does not mean low risk, authorized, or safe.
 
 | Level | Criteria (any strong match can raise the level) |
 | --- | --- |

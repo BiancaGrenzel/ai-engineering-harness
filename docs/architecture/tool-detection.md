@@ -45,7 +45,9 @@ The public API lives in `harness.tools`:
 | Health | Does the Tool function minimally under a safe check? |
 
 `detected != healthy`. Presence of a binary is not a functional guarantee.
-Health checking is out of scope for this phase.
+Health checking is a separate runtime layer documented in
+[`tool-health.md`](tool-health.md). Detection produces a `DetectionResult` that
+Health may consume; Detection does not infer health.
 
 ## Detection vs Installation
 
@@ -156,11 +158,10 @@ For `mcp-server`, `api`, `library`, and `service`, detection returns
 
 ## Out of scope
 
-- Health checking
+- Health probing semantics (see [`tool-health.md`](tool-health.md))
 - Installation
 - Package managers
 - MCP runtime
-- Tool CLI presentation
 - Adapter wiring
 - Effective risk / provenance / trust
 - Version constraint solvers (`>=`, `^`, `~`, …)
@@ -169,5 +170,6 @@ For `mcp-server`, `api`, `library`, and `service`, detection returns
 ## Related documents
 
 - [`adr/0001-tool-system-architecture.md`](adr/0001-tool-system-architecture.md)
+- [`tool-health.md`](tool-health.md)
 - [`tools.md`](tools.md)
 - [`../tools/README.md`](../tools/README.md)

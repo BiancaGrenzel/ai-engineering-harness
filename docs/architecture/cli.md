@@ -10,6 +10,7 @@ Provide a small, predictable entrypoint for:
 
 - Validating project Harness configuration
 - Generating agent-specific files through adapters
+- Inspecting Tool Detection and Health for Registry Tools
 
 It is not a runtime, package manager, plugin host, or orchestration framework.
 
@@ -64,11 +65,12 @@ Those belong to each adapter and to `adapters/common/`.
 | --- | --- |
 | `harness validate` | Discover project root; validate `.harness/harness.yaml` against `schemas/harness.schema.json` (syntax only) |
 | `harness generate cursor` | Dispatch to the Cursor adapter generator |
+| `harness tools health <tool>` | Resolve, detect, and health-check one Tool from `tools/registry.yaml` |
 | `harness version` | Print **Harness** CLI/package version |
 
 Not implemented (do not document as available):
 
-- `init`, `doctor`, `analyze`, `tools`, `skills`, `rules`, `profile`, `install`, `adapters`, `config`, `runtime`
+- `init`, `doctor`, `analyze`, `skills`, `rules`, `profile`, `install`, `adapters`, `config`, `runtime`
 
 ### Invocation
 
@@ -79,9 +81,9 @@ Preferred entrypoint (no packaging / publishing in this phase):
 python -m harness validate
 python -m harness generate cursor
 python -m harness generate cursor --dry-run
+python -m harness tools health rtk
 python -m harness version
 ```
-
 When the current working directory is a subdirectory, Python may not resolve the
 `harness` package via `-m`. Either:
 
@@ -101,7 +103,7 @@ CLI can be invoked without setting `PYTHONPATH`.
 
 | Flag | Commands | Meaning |
 | --- | --- | --- |
-| `--root PATH` | `validate`, `generate <adapter>` | Explicit project root; skips upward discovery |
+| `--root PATH` | `validate`, `generate <adapter>`, `tools health` | Explicit project root; skips upward discovery |
 | `--dry-run` | `generate cursor` | Passed through to the adapter; no file writes |
 
 ## Exit codes
@@ -170,6 +172,10 @@ Validate success / failure messages match the shared validator:
 - `Harness configuration is valid.`
 - `Harness configuration is invalid.` plus error details
 
+`tools health` presents Detection and Health observations using
+`format_health_cli_report` from `harness.tools`. Exit code `0` means healthy;
+exit code `1` covers unhealthy, unavailable, unsupported, timeout, error, missing
+Tool, or missing project/registry.
 ## Extensibility (future)
 
 Logical next steps (not implemented here):
@@ -184,5 +190,7 @@ Prefer keeping the CLI thin. New behavior should land in core/adapters first, th
 
 - Configuration: [`configuration.md`](configuration.md)
 - Adapters: [`adapters.md`](adapters.md)
+- Tool Detection: [`tool-detection.md`](tool-detection.md)
+- Tool Health: [`tool-health.md`](tool-health.md)
 - Cursor adapter: [`../../adapters/cursor/README.md`](../../adapters/cursor/README.md)
 - Package: [`../../harness/`](../../harness/)
