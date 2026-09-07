@@ -197,4 +197,4 @@ Avoid loading:
 
 - `AGENTS.md` — Section 4
 - `docs/architecture/skills.md`
-- Future: `docs/tools/token/rtk.md` (not created in this phase)
+- `docs/tools/token/rtk.md`

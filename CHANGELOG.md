@@ -15,3 +15,8 @@
 - Skills template and catalog (`skills/`)
 - Core Skills: task-analysis, planning, context-engineering, research, verification
 - AI Engineering Skill: token-optimization
+- Initial Tool Registry architecture
+- Tool documentation standard
+- Tool evaluation criteria
+- Token optimization category
+- RTK evaluation

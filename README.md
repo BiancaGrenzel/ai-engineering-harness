@@ -27,7 +27,7 @@ Canonical layout (target):
 ```text
 rules/       # persistent agent behavior (canonical)
 skills/      # specialized procedures (canonical)
-docs/        # documentation
+docs/        # documentation (includes Tool Registry)
 tools/       # integrations and utilities (planned)
 profiles/    # role-specific compositions (planned)
 .harness/    # harness configuration (planned)
@@ -36,6 +36,16 @@ profiles/    # role-specific compositions (planned)
 ```
 
 Provider-specific directories act as adapters. Canonical resources stay vendor-neutral.
+
+### Rules, Skills, Tools
+
+| Layer | Role |
+| --- | --- |
+| **Rules** | Persistent agent behavior |
+| **Skills** | Specialized procedures |
+| **Tools** | External capabilities (CLI, MCP, services, utilities, …) |
+
+The **Tool Registry** documents external tools with evidence-based metadata: type, status, security, token/context impact, and agent compatibility. Catalog docs live in [`docs/tools/`](docs/tools/). Runtime integrations under `tools/` are not implemented yet.
 
 ## Principles
 
@@ -48,7 +58,7 @@ Provider-specific directories act as adapters. Canonical resources stay vendor-n
 - Verify before claiming success
 - Keep the harness useful across agents and disciplines
 
-See [AGENTS.md](AGENTS.md) for the full agent instructions, [rules/](rules/) for canonical Rules, and [skills/](skills/) for canonical Skills. The Skills contract is defined in [docs/architecture/skills.md](docs/architecture/skills.md).
+See [AGENTS.md](AGENTS.md) for the full agent instructions, [rules/](rules/) for canonical Rules, and [skills/](skills/) for canonical Skills. The Skills contract is defined in [docs/architecture/skills.md](docs/architecture/skills.md). The Tools contract is defined in [docs/architecture/tools.md](docs/architecture/tools.md).
 
 ## Supported Environments
 
@@ -65,10 +75,11 @@ Adapters are not implemented yet.
 | Agent instructions (`AGENTS.md`, `CLAUDE.md`) | Done | Project principles and agent entrypoint |
 | Rules foundation | Done | Canonical Rules + project docs |
 | Skills architecture | Done | Skill contract + core and AI Engineering Skills |
-| Broader docs, tools, profiles, `.harness/` | Not implemented | Broader harness structure |
+| Tool Registry architecture | Done | Catalog, template, evaluation policy, RTK docs |
+| Profiles, `.harness/`, runtime `tools/` integrations | Not implemented | Broader harness structure |
 | Agent adapters (`.cursor/`, `.claude/`, …) | Not implemented | Provider-specific projection |
 | CLI / `harness doctor` / installers | Not implemented | Operational tooling |
-| MCP, RTK, RAG, observability integrations | Not implemented | External capabilities |
+| MCP, RTK, RAG, observability runtime integrations | Not implemented | External capability wiring |
 
 ## License
 
