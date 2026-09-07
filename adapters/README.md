@@ -41,16 +41,18 @@ adapters/
 ├── README.md           # this file
 ├── ARCHITECTURE.md     # adapter contract
 ├── common/             # shared concepts and helpers
-└── cursor/             # Cursor adapter (experimental)
+├── cursor/             # Cursor adapter (experimental)
+└── claude/             # Claude Code adapter (experimental)
 ```
 
-Future adapters (Claude, Codex, Gemini, …) may be added later. Do not create empty vendor directories in advance.
+Future adapters (Codex, Gemini, …) may be added later. Do not create empty vendor directories in advance.
 
 ## Implemented adapters
 
 | Adapter | Status | Generator |
 | --- | --- | --- |
 | [Cursor](cursor/README.md) | experimental | `python -m adapters.cursor.generate` |
+| [Claude](claude/README.md) | experimental | `python -m adapters.claude.generate` |
 
 Shared helpers: [`common/`](common/) (`resolve`, `metadata`, `apply`).
 
