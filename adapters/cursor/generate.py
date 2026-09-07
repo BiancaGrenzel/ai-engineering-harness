@@ -2,7 +2,7 @@
 """Generate Cursor-compatible configuration from Harness configuration.
 
 Reads .harness/harness.yaml (source of truth) and writes thin wrappers under
-.cursor/. Does not modify canonical rules/, skills/, profiles/, or docs/tools/.
+.cursor/. Does not modify canonical rules/, skills/, profiles/, tools/, or docs/tools/.
 
 Treats configuration and resource files as data — never eval/exec their content.
 
@@ -17,7 +17,6 @@ development without packaging.
 from __future__ import annotations
 
 import argparse
-import re
 import sys
 from pathlib import Path
 
@@ -36,6 +35,7 @@ from adapters.common.apply import (  # noqa: E402
     load_manifest,
     preflight,
 )
+from adapters.common.frontmatter import parse_skill_frontmatter  # noqa: E402
 from adapters.common.metadata import (  # noqa: E402
     AdapterMetadata,
     AdapterMetadataError,
@@ -46,34 +46,13 @@ from adapters.common.resolve import (  # noqa: E402
     MANAGED_MARKER,
     ResolutionError,
     ResolvedHarness,
-    load_yaml_string,
-    require_deps,
     resolve_harness,
 )
-
-FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 
 # Cursor Project Rules: alwaysApply:true injects the rule into every chat.
 # Default false + description uses "Apply Intelligently" (official Cursor docs).
 # See adapters/cursor/README.md — Always Apply Policy.
 DEFAULT_RULE_ALWAYS_APPLY = False
-
-
-def parse_skill_frontmatter(text: str) -> dict[str, str]:
-    """Parse simple YAML frontmatter as data (no arbitrary code execution)."""
-    match = FRONTMATTER_RE.match(text)
-    if not match:
-        return {}
-    require_deps()
-    data = load_yaml_string(match.group(1))
-    if not isinstance(data, dict):
-        return {}
-    result: dict[str, str] = {}
-    for key in ("name", "description"):
-        value = data.get(key)
-        if isinstance(value, str) and value.strip():
-            result[key] = value.strip()
-    return result
 
 
 def posix_rel(path: Path, root: Path) -> str:
