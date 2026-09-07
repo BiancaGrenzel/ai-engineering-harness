@@ -4,6 +4,11 @@
 
 ### Added
 
+- `harness init` / `harness init --profile <name>` to materialize a Harness-enabled project
+- `harness init --dry-run` (fail-closed create / unchanged / conflict planning, no writes)
+- Read-only content pack packaging under `harness.content` (schemas, profiles, rules, skills, tools registry, tool docs)
+- Setuptools build hook (`setup.py`) that ships the content pack inside the wheel as `harness/content/_data`
+- Init / content-pack tests (`tests/test_init.py`) including isolated external-project smoke coverage
 - Local installable packaging via `pyproject.toml` (`pip install .`)
 - Console script entrypoint: `harness = harness.cli:main`
 - Packaging / installed-CLI smoke tests (`tests/test_packaging.py`)
@@ -49,8 +54,10 @@
 
 ### Changed
 
+- Document Installed Engine vs Project Content vs Generated Vendor Projection
+- Document `harness init` as the bootstrap path for external projects
 - Document installed (`harness`) vs development (`python -m harness`) invocation
-- Document engine vs project-local resource model (Profiles / Rules / Skills / schemas stay project-local)
+- Document engine vs project-local resource model (Profiles / Rules / Skills / schemas stay project-local after init)
 - Cursor adapter conflicts are **fail-closed** (preflight before any writes)
 - Cursor Rules default to `alwaysApply: false` with description (Apply Intelligently)
 - `adapter.yaml` is loaded and validated; capabilities must match generator behavior

@@ -33,11 +33,19 @@ profiles/    # role-specific compositions
 schemas/     # JSON Schemas for configuration
 scripts/     # small development utilities
 adapters/    # agent compatibility layer (Cursor first)
-harness/     # thin CLI (validate, generate, tools health)
+harness/     # thin CLI (init, validate, generate, tools health)
 tools/       # Tool Registry (+ planned installers/wrappers)
 ```
 
 Provider-specific output (for example `.cursor/`) is produced by adapters. Canonical resources stay vendor-neutral.
+
+### Installed Engine vs Project Content vs Vendor Projection
+
+| Layer | How it appears | Role |
+| --- | --- | --- |
+| **Installed Engine** | `pip install .` → `harness` + `adapters` (+ read-only content pack) | CLI, resolution, generation, detection, health |
+| **Project Content** | `harness init` → `.harness/`, `profiles/`, `rules/`, `skills/`, `tools/`, `docs/tools/`, `schemas/` | Versionable project source of truth |
+| **Vendor Projection** | `harness generate cursor\|claude` → `.cursor/`, `.claude/` | Agent-specific generated files |
 
 ### Rules, Skills, Tools, Profiles, Configuration
 
@@ -86,6 +94,8 @@ After install, the `harness` console script is available without `PYTHONPATH`:
 ```bash
 harness --help
 harness version
+harness init --profile software-engineer
+harness init --profile software-engineer --dry-run
 harness validate
 harness generate cursor --dry-run
 harness generate cursor
@@ -100,6 +110,7 @@ From a repository checkout (package on `PYTHONPATH` or after editable install):
 
 ```bash
 python -m harness --help
+python -m harness init --profile software-engineer --dry-run
 python -m harness validate
 python -m harness generate cursor --dry-run
 python -m harness generate claude --dry-run
@@ -111,7 +122,17 @@ python -m harness version
 
 ### Engine vs project resources
 
-`pip install` installs the **engine** (Python packages `harness` and `adapters`, including adapter metadata). Canonical Profiles, Rules, Skills, Tool Registry, schemas, and docs remain **project-local** under a Harness-enabled project (alongside `.harness/harness.yaml`). See [`docs/architecture/cli.md`](docs/architecture/cli.md#installed-engine-vs-project-resources).
+`pip install` installs the **Installed Engine** (Python packages `harness` and `adapters`, plus a read-only content pack). `harness init` copies the selected Profile and dependencies into the target project as **Project Content**. `harness generate` creates **Vendor Projection** files. See [`docs/architecture/cli.md`](docs/architecture/cli.md#installed-engine-vs-project-content-vs-vendor-projection).
+
+Typical external-project flow:
+
+```bash
+pip install .
+mkdir my-project && cd my-project
+harness init --profile software-engineer
+harness validate
+harness generate cursor --dry-run
+```
 
 Validate configuration:
 
@@ -196,11 +217,12 @@ The Cursor and Claude adapters are experimental. Additional agent adapters are n
 | Adapter architecture + Cursor adapter | Done (experimental) | Harness → agent projection |
 | Claude adapter | Done (experimental) | Harness → `.claude/` projection |
 | Initial CLI (`validate`, `generate`, `tools health`) | Done | Thin interface over existing APIs |
-| Local packaging (`pip install .` → `harness`) | Done | Installable engine; project resources stay project-local |
+| Local packaging (`pip install .` → `harness`) | Done | Installable engine + read-only content pack |
 | Tool Registry + Detection + Health | Done | Declarative catalog; read-only local probes |
+| Profile / project scaffolding (`harness init`) | Done | Bootstrap Project Content for external projects |
 | Runtime Tool installers / wrappers | Not implemented | Install, configure, or package Tools |
-| Profile / project scaffolding (`harness init`) | Not implemented | Bootstrap a Harness-enabled project |
 | PyPI publishing / release automation | Not implemented | Public distribution beyond local install |
+| Additional Profiles (security, …) | Not implemented | Content-pack additions |
 | Additional agent adapters (Codex, …) | Not implemented | More vendor projections |
 | `harness doctor` / more CLI commands | Not implemented | Operational tooling |
 | MCP, RTK wiring, RAG, observability runtime | Not implemented | External capability wiring |

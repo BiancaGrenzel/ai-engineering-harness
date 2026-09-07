@@ -8,6 +8,7 @@ The CLI is a **thin interface**. It exposes existing Harness capabilities; it do
 
 Provide a small, predictable entrypoint for:
 
+- Initializing Harness project content from the read-only content pack
 - Validating project Harness configuration
 - Generating agent-specific files through adapters
 - Inspecting Tool Detection and Health for Registry Tools
@@ -63,6 +64,7 @@ Those belong to each adapter and to `adapters/common/`.
 
 | Command | Behavior |
 | --- | --- |
+| `harness init` | Materialize Project Content from the read-only content pack into a target directory |
 | `harness validate` | Discover project root; validate `.harness/harness.yaml` against `schemas/harness.schema.json` (syntax only) |
 | `harness generate cursor` | Dispatch to the Cursor adapter generator |
 | `harness generate claude` | Dispatch to the Claude adapter generator |
@@ -71,7 +73,7 @@ Those belong to each adapter and to `adapters/common/`.
 
 Not implemented (do not document as available):
 
-- `init`, `doctor`, `analyze`, `skills`, `rules`, `profile`, `install`, `adapters`, `config`, `runtime`
+- `doctor`, `analyze`, `skills`, `rules`, `profile use`, remote profiles, `install`, `adapters`, `config`, `runtime`
 
 ### Installation
 
@@ -81,7 +83,7 @@ Distribution name: `ai-engineering-harness`. Import package: `harness`.
 pip install .
 ```
 
-This installs the engine locally. PyPI publishing and release automation are future work.
+This installs the **Installed Engine** locally, including a read-only content pack used by `harness init`. PyPI publishing and release automation are future work.
 
 Console script entrypoint (declared in `pyproject.toml`):
 
@@ -94,6 +96,8 @@ harness = harness.cli:main
 After `pip install .` (or an equivalent local install), use the console script from any directory:
 
 ```bash
+harness init --profile software-engineer
+harness init --profile software-engineer --dry-run
 harness validate
 harness generate cursor
 harness generate cursor --dry-run
@@ -111,6 +115,7 @@ Preferred during repository development (same `main()` as the console script):
 
 ```bash
 # from the repository root (directory that contains the harness/ package)
+python -m harness init --profile software-engineer --dry-run
 python -m harness validate
 python -m harness generate cursor
 python -m harness generate cursor --dry-run
@@ -133,8 +138,10 @@ CLI can be invoked without setting `PYTHONPATH` during local development.
 
 | Flag | Commands | Meaning |
 | --- | --- | --- |
+| `--root PATH` | `init` | Target directory for materialization (default: cwd; does not walk upward) |
 | `--root PATH` | `validate`, `generate <adapter>`, `tools health` | Explicit project root; skips upward discovery |
-| `--dry-run` | `generate cursor`, `generate claude` | Passed through to the adapter; no file writes |
+| `--profile NAME` | `init` | Profile to materialize; required when stdin is non-interactive |
+| `--dry-run` | `init`, `generate cursor`, `generate claude` | Plan only; no file writes |
 
 ## Exit codes
 
@@ -142,12 +149,24 @@ Minimal policy:
 
 | Code | Meaning |
 | --- | --- |
-| `0` | Success |
-| `1` | Expected failure (missing config, invalid config, unknown adapter, adapter conflict / failure) |
+| `0` | Success (including idempotent init with only unchanged files) |
+| `1` | Expected failure (missing config, invalid config, unknown adapter/profile, init/adapter conflict / failure, non-interactive init without `--profile`) |
 
 Dependency install problems from the shared validator may still exit `2` (same as `scripts/validate-config.py`). Unexpected programming errors may print a traceback during development; expected user errors must not.
 
 ## Project root discovery
+
+### `harness init`
+
+Init targets an uninitialized (or already initialized) directory:
+
+1. Use `--root PATH` when provided
+2. Otherwise use the current working directory
+3. Do **not** walk upward looking for an existing `.harness/harness.yaml`
+
+This avoids accidentally materializing into a parent Harness project.
+
+### Other commands
 
 When `--root` is omitted:
 
@@ -167,20 +186,36 @@ With `--root PATH`, that directory must contain `.harness/harness.yaml`; otherwi
 
 The current working directory is never treated as the project root merely because it is cwd; discovery always requires `.harness/harness.yaml` (or an explicit `--root` that contains it).
 
-## Installed engine vs project resources
+## Installed Engine vs Project Content vs Vendor Projection
 
-`pip install ai-engineering-harness` (or `pip install .`) installs the **engine**, not a global copy of Profiles / Rules / Skills.
+Keep these layers separate:
 
-### Installed with the package (engine)
+```text
+Installed Engine
+  harness/ + adapters/ + read-only content pack
+        │
+        │  harness init
+        ▼
+Project Content
+  .harness/ profiles/ rules/ skills/ tools/ docs/tools/ schemas/
+        │
+        │  harness generate <adapter>
+        ▼
+Generated Vendor Projection
+  .cursor/  .claude/  (future adapters)
+```
+
+### Installed Engine (pip package)
 
 | Resource | Role |
 | --- | --- |
-| `harness/` | CLI, project discovery, config validation helpers, Tool Detection / Health |
+| `harness/` | CLI, project discovery, config validation, Tool Detection / Health, content-pack access |
 | `adapters/` | Cursor and Claude generators plus `adapters/common/` |
 | `adapters/*/adapter.yaml` | Adapter capability metadata (package data) |
+| `harness/content/_data` | Read-only content pack for `harness init` (not mutable global config) |
 | Runtime deps | `PyYAML`, `jsonschema` |
 
-### Expected in a Harness-enabled project
+### Project Content (after `harness init`)
 
 | Resource | Role |
 | --- | --- |
@@ -190,11 +225,40 @@ The current working directory is never treated as the project root merely becaus
 | `skills/` | Canonical Skills referenced by Profile / config |
 | `tools/registry.yaml` | Tool Registry when Tools are used |
 | `docs/tools/` | Human Tool docs referenced by the Registry |
-| `schemas/` | JSON Schemas used by validate / resolve (`harness.schema.json`, `profile.schema.json`, `tool-registry.schema.json`) |
+| `schemas/` | JSON Schemas used by validate / resolve |
 
-After installation, the CLI may run from an arbitrary working directory. It discovers the nearest ancestor with `.harness/harness.yaml` and resolves Profiles, Rules, Skills, Tools, and schemas **relative to that project root**. It does not invent a repository-root location from the installed package.
+After init, the **project** is the source of truth. The installed content pack is not consulted again for day-to-day validate/generate.
 
-**Limitation:** this packaging phase does not ship canonical Profiles / Rules / Skills / schemas as engine-owned defaults. A project outside this repository must supply those resources itself (or obtain them through a future bootstrap / distribution mechanism such as `harness init`). Packaging them into the wheel as global mutable content was intentionally avoided.
+### Generated Vendor Projection
+
+| Resource | Role |
+| --- | --- |
+| `.cursor/` | Cursor adapter output (`harness generate cursor`) |
+| `.claude/` | Claude adapter output (`harness generate claude`) |
+
+`harness init` does **not** create vendor projections and does not modify `CLAUDE.md`, `AGENTS.md`, `src/`, or other user project files outside the Harness content areas above.
+
+## `harness init` contract
+
+```bash
+harness init
+harness init --profile software-engineer
+harness init --profile software-engineer --dry-run
+harness init --root /path/to/project --profile software-engineer
+```
+
+Behavior:
+
+1. Resolve target root (`--root` or cwd)
+2. Resolve profile (`--profile`, or interactive prompt when stdin is a TTY)
+3. Build a selective file map for that Profile and its dependencies
+4. Classify each path: create / unchanged / conflict
+5. Fail-closed on conflicts (no writes)
+6. Write only missing files when the plan is clean
+
+Idempotency: running the same init twice is safe when existing files are byte-identical. Divergent files are conflicts.
+
+Currently shipped Profile: `software-engineer`. Future Profiles are content additions inside the pack, not engine features.
 
 ## Adapter dispatch
 
@@ -228,6 +292,8 @@ Do not conflate these.
 
 Generation output is owned by the adapter (Created / Updated / Unchanged / Conflicts / Warnings / Errors). The CLI presents that output without a second formatting system.
 
+Init output uses the same create / unchanged / conflict vocabulary for content-pack materialization (no silent updates of divergent files).
+
 Validate success / failure messages match the shared validator:
 
 - `Harness configuration is valid.`
@@ -242,13 +308,12 @@ Tool, or missing project/registry.
 
 Logical next steps (not implemented here):
 
-- Project scaffolding (`harness init`) so a Harness-enabled tree can be created outside this repository
-- Optional packaging of read-only schema defaults if product policy prefers engine-shipped schemas
+- Additional Profiles as content-pack additions
 - PyPI publishing / release automation
 - Additional `generate <adapter>` entries when new adapters land
 - Further commands only when they wrap real Harness capabilities
 
-Prefer keeping the CLI thin. New behavior should land in core/adapters first, then be exposed by the CLI.
+Prefer keeping the CLI thin. New behavior should land in core/adapters/content first, then be exposed by the CLI.
 
 ## Related
 

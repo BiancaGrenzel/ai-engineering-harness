@@ -14,9 +14,10 @@ Snapshot based on the repository working tree on 2026-09-07. Status reflects obs
 | Tool health | Implemented | Read-only CLI health probe composed with DetectionResult; optional declarative Registry `health` contract; `harness tools health <tool>`. |
 | Cursor adapter | Experimental | Generates a Cursor projection from canonical configuration with fail-closed conflict handling. |
 | Claude adapter | Experimental | Generates a Claude Code projection (`.claude/rules`, `.claude/skills`) without managing `CLAUDE.md`. |
-| CLI | Implemented | Thin `validate`, `generate cursor|claude`, `tools health`, and `version` interface. |
-| Packaging | Implemented | Local `pip install .` exposes `harness` console script; Profiles/Rules/Skills/schemas remain project-local. |
-| Security Profiles | Planned | No security-specific Profile exists; security is currently a selected Rule category. |
+| CLI | Implemented | Thin `init`, `validate`, `generate cursor|claude`, `tools health`, and `version` interface. |
+| Packaging | Implemented | Local `pip install .` exposes `harness` console script and a read-only content pack for `init`. |
+| Project bootstrap | Implemented | `harness init --profile software-engineer` materializes project content; fail-closed conflicts; dry-run. |
+| Security Profiles | Planned | No security-specific Profile exists yet; security is currently a selected Rule category. |
 
 ## Commands
 
@@ -26,6 +27,7 @@ Run from the repository root:
 python scripts/validate-config.py
 pip install .
 harness version
+harness init --profile software-engineer
 harness validate
 python -m harness validate
 python -m harness generate cursor --dry-run
@@ -39,13 +41,21 @@ python -m adapters.claude.generate --dry-run
 python -m unittest discover -s tests -q
 ```
 
+## Layers
+
+```text
+Installed Engine     → harness/ + adapters/ (+ read-only content pack)
+Project Content      → .harness/, profiles/, rules/, skills/, tools/, docs/tools/, schemas/
+Vendor Projection    → .cursor/, .claude/ (via harness generate)
+```
+
 ## Current repository structure
 
 ```text
 .harness/       project selection and adapter manifests
 adapters/       vendor-specific projections (Cursor, Claude)
 docs/           architecture, Tool docs, and project context
-harness/        thin CLI and shared runtime code
+harness/        thin CLI, shared runtime, and content-pack helpers
 profiles/       reusable capability compositions
 rules/          canonical persistent behavior
 schemas/        configuration and Registry schemas
@@ -57,11 +67,11 @@ tools/          declarative Tool Registry
 
 ## Current tests
 
-The standard command is `python -m unittest discover -s tests -q`. At this snapshot it ran 186 tests successfully after packaging landed.
+The standard command is `python -m unittest discover -s tests -q`.
 
 ## Known limitations
 
-- Packaging installs the engine only. A project outside this repository still needs its own Profiles, Rules, Skills, Tool Registry, schemas, and docs; there is no `harness init` yet.
+- Only the `software-engineer` Profile is shipped in the content pack. Future Profiles are content additions, not engine features.
 - There is one implemented, experimental Cursor adapter; Claude adapter is also experimental. Codex and other adapters are not implemented.
 - Configuration validation is structural. Semantic resolution occurs in the adapter path rather than as a standalone validation command.
 - The Registry currently contains one Tool and has no installation, configuration, package-management, or MCP runtime layer.

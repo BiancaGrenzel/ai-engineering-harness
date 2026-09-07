@@ -78,10 +78,15 @@ This is an index, not a replacement for architecture documents or ADRs.
 **Status:** Accepted.  
 **Reference:** `docs/architecture/cli.md`, `harness/cli.py`.
 
-**Decision:** Packaging installs the engine (`harness` + `adapters`) while Profiles, Rules, Skills, Tool Registry, schemas, and docs remain project-local.
-**Reason:** Avoid shipping canonical project content as global mutable package state; keep engine/project separation clear before `harness init` / distribution exists.
-**Status:** Accepted for packaging v1; project scaffolding is future work.
-**Reference:** `pyproject.toml`, `docs/architecture/cli.md`.
+**Decision:** Packaging installs the engine (`harness` + `adapters`) plus a read-only content pack used only by `harness init`.
+**Reason:** External projects need a bootstrap path, but the installed pack must not become mutable global configuration. After init, the project tree is the source of truth.
+**Status:** Accepted.
+**Reference:** `pyproject.toml`, `setup.py`, `harness/content/`, `docs/architecture/cli.md`.
+
+**Decision:** `harness init` materializes only the selected Profile and its dependencies; conflicts are fail-closed; vendor projections remain `harness generate`.
+**Reason:** Keep Engine / Project Content / Vendor Projection separated and avoid silent overwrites of user-owned files.
+**Status:** Accepted.
+**Reference:** `harness/init.py`, `harness/content/materialize.py`, `docs/architecture/cli.md`.
 
 ## Runtime
 
