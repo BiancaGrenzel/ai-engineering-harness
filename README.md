@@ -33,6 +33,7 @@ profiles/    # role-specific compositions
 schemas/     # JSON Schemas for configuration
 scripts/     # small development utilities
 adapters/    # agent compatibility layer (Cursor first)
+harness/     # thin CLI (validate, generate)
 tools/       # integrations and utilities (planned)
 ```
 
@@ -62,10 +63,12 @@ Project configuration is declarative and lives in [`.harness/harness.yaml`](.har
 
 Contract: [`docs/architecture/configuration.md`](docs/architecture/configuration.md)
 
-Validate syntax (CLI is **not** implemented yet):
+Validate configuration:
 
 ```bash
 pip install -r scripts/requirements.txt
+python -m harness validate
+# equivalent script:
 python scripts/validate-config.py
 ```
 
@@ -74,6 +77,20 @@ Tests:
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+## CLI
+
+Thin interface over existing Harness validation and adapters. Architecture: [`docs/architecture/cli.md`](docs/architecture/cli.md).
+
+```bash
+python -m harness --help
+python -m harness validate
+python -m harness generate cursor --dry-run
+python -m harness generate cursor
+python -m harness version
+```
+
+Run `python -m harness` from the project root (or set `PYTHONPATH` to that root). A console-script `harness` entrypoint is not packaged yet; for a path-bootstrapped launcher in this repo: `python scripts/harness validate`.
 
 ## Principles
 
@@ -108,9 +125,12 @@ Agent-specific configuration
 
 Architecture: [`docs/architecture/adapters.md`](docs/architecture/adapters.md) · Contract: [`adapters/ARCHITECTURE.md`](adapters/ARCHITECTURE.md)
 
-Generate Cursor wrappers (no full CLI yet):
+Generate Cursor wrappers:
 
 ```bash
+python -m harness generate cursor
+python -m harness generate cursor --dry-run
+# equivalent adapter entrypoint:
 python -m adapters.cursor.generate
 python -m adapters.cursor.generate --dry-run
 ```
@@ -133,9 +153,10 @@ The Cursor adapter is experimental. Additional agent adapters are not implemente
 | Tool Registry architecture | Done | Catalog, template, evaluation policy, RTK docs |
 | Profiles + `.harness/` configuration | Done | Declarative config, schema, syntax validator |
 | Adapter architecture + Cursor adapter | Done (experimental) | Harness → agent projection |
+| Initial CLI (`validate`, `generate cursor`) | Done | Thin interface over existing APIs |
 | Runtime `tools/` integrations | Not implemented | Installers, wrappers for Tools |
 | Additional agent adapters (Claude, Codex, …) | Not implemented | More vendor projections |
-| CLI / `harness doctor` / installers | Not implemented | Operational tooling |
+| `harness doctor` / installers / more CLI commands | Not implemented | Operational tooling |
 | MCP, RTK, RAG, observability runtime integrations | Not implemented | External capability wiring |
 
 ## License

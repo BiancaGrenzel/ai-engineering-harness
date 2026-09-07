@@ -91,12 +91,14 @@ Configuration **selects**. It does not redefine Rule text, Skill workflows, or T
 
 ## Validate
 
-Syntax validation (no CLI yet):
+Syntax validation:
 
 ```bash
+python -m harness validate
+# equivalent:
 python scripts/validate-config.py
 ```
 
 Requires dependencies listed in `scripts/requirements.txt`.
 
-Full contract: [`docs/architecture/configuration.md`](../docs/architecture/configuration.md)
+Full contract: [`docs/architecture/configuration.md`](../docs/architecture/configuration.md) · CLI: [`docs/architecture/cli.md`](../docs/architecture/cli.md)

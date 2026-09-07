@@ -12,8 +12,13 @@
 # Install:
 #   pip install -r scripts/requirements.txt
 #
-# Run:
+# Validate:
+#   python -m harness validate
 #   python scripts/validate-config.py
+#
+# CLI launcher (bootstraps sys.path for this repo):
+#   python scripts/harness validate
+#   python scripts/harness generate cursor --dry-run
 #
 # Tests:
 #   python -m unittest discover -s tests -v

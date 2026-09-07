@@ -2,17 +2,13 @@
 
 ## Unreleased
 
-### Changed
-
-- Cursor adapter conflicts are **fail-closed** (preflight before any writes)
-- Cursor Rules default to `alwaysApply: false` with description (Apply Intelligently)
-- `adapter.yaml` is loaded and validated; capabilities must match generator behavior
-- Managed manifest includes `adapter_version` and documents inventory-only role
-- Adapter tests use canonical `schemas/` (no fixture schema copies)
-- Prefer `python -m adapters.cursor.generate` (script path bootstrap retained)
-
 ### Added
 
+- Initial Harness CLI (`python -m harness`)
+- `validate` command
+- `generate cursor` command
+- Shared config validation module used by the CLI and `scripts/validate-config.py`
+- Optional path-bootstrapped launcher: `python scripts/harness`
 - Shared adapter helpers: `adapters/common/metadata.py`, `adapters/common/apply.py`
 - Tests for Profile inherit/replace, fail-closed conflicts, stale removal, metadata/capabilities
 - Cursor adapter Verification Status and Always Apply Policy documentation
@@ -44,3 +40,12 @@
 - Profile schema (`schemas/profile.schema.json`)
 - Configuration architecture documentation
 - Configuration validation script (`scripts/validate-config.py`)
+
+### Changed
+
+- Cursor adapter conflicts are **fail-closed** (preflight before any writes)
+- Cursor Rules default to `alwaysApply: false` with description (Apply Intelligently)
+- `adapter.yaml` is loaded and validated; capabilities must match generator behavior
+- Managed manifest includes `adapter_version` and documents inventory-only role
+- Adapter tests use canonical `schemas/` (no fixture schema copies)
+- Prefer `python -m adapters.cursor.generate` (script path bootstrap retained)

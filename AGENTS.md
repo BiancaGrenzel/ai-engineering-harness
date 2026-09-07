@@ -448,6 +448,7 @@ profiles/   → role-specific configurations
 .harness/   → harness configuration
 schemas/    → configuration schemas
 adapters/   → agent compatibility generators
+harness/    → thin CLI (validate, generate)
 
 ```
 

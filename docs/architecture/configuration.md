@@ -2,7 +2,7 @@
 
 Official standard for Harness configuration and Profiles.
 
-Canonical project configuration lives in [`.harness/harness.yaml`](../../.harness/harness.yaml). Reusable defaults live in [`profiles/`](../../profiles/). This document defines the contract. A future CLI or runtime may read these files; that runtime is not implemented in this phase.
+Canonical project configuration lives in [`.harness/harness.yaml`](../../.harness/harness.yaml). Reusable defaults live in [`profiles/`](../../profiles/). This document defines the contract. The CLI (`python -m harness`) reads these files for validation and adapter generation; see [`cli.md`](cli.md).
 
 ## Purpose
 
