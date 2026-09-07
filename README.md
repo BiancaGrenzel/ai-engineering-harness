@@ -48,7 +48,7 @@ Canonical resources stay vendor-neutral in the content pack.
 
 | Layer | How it appears | Role |
 | --- | --- | --- |
-| **Installed Engine** | `pip install ai-engineering-harness` → `harness` + `adapters` + content pack | CLI, resolution, generation, detection, health |
+| **Installed Engine** | `pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.0` → `harness` + `adapters` + content pack | CLI, resolution, generation, detection, health |
 | **Built-in content pack** | `harness/content/_data` (installed) or repo root (source authoring) | Immutable Profiles, Rules, Skills, Schemas, Tools shipped with the package |
 | **Project content** | `harness init` → `.harness/` (harness.yaml + profiles/rules/skills/schemas/tools/docs) | Project Harness source of truth after init |
 | **Vendor Projection** | `harness generate cursor\|claude` → `.cursor/`, `.claude/` at project root | Self-contained agent-specific generated files |
@@ -90,24 +90,48 @@ Contract: [`docs/architecture/configuration.md`](docs/architecture/configuration
 
 Thin interface over existing Harness validation and adapters. Architecture: [`docs/architecture/cli.md`](docs/architecture/cli.md).
 
-### Install (local)
+### Install
 
 The distribution name is `ai-engineering-harness`. The import package remains `harness`.
 
+**Recommended:** install inside a virtual environment so the `harness` command is on `PATH` after activation (avoids the common Windows issue where a user-level `pip install` puts scripts in a folder that is not on `PATH`).
+
 ```bash
-pip install .
-# or, from a checkout / wheel once published:
-# pip install ai-engineering-harness
+cd my-project
+python -m venv .venv
+
+# Windows (PowerShell)
+.\.venv\Scripts\Activate.ps1
+
+# macOS / Linux
+# source .venv/bin/activate
+
+pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.0
+harness version
 ```
 
-PyPI publishing and release automation are **not** set up yet. The package is installable locally today.
+Without a venv, prefer the module entrypoint (always works if the package is installed for that Python):
+
+```bash
+pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.0
+python -m harness version
+```
+
+From a repository checkout (local / editable development):
+
+```bash
+pip install .
+# or: pip install -e .
+```
+
+Package source: [TestPyPI](https://test.pypi.org/project/ai-engineering-harness/). Production PyPI publishing and release automation are **not** set up yet.
 
 ### Installed invocation
 
-After install, the `harness` console script is available without `PYTHONPATH`:
+`harness` and `python -m harness` share the same `harness.cli:main` entrypoint.
 
 ```bash
-harness --help
+harness --help                    # or: python -m harness --help
 harness version
 harness init --profile software-engineer
 harness init --profile software-engineer --dry-run
@@ -118,6 +142,12 @@ harness generate claude --dry-run
 harness generate claude
 harness tools health rtk
 ```
+
+If `harness` is not found:
+
+1. Activate your venv (recommended), or
+2. Use `python -m harness …`, or
+3. On Windows after a global/user install, add `%APPDATA%\Python\Python3xx\Scripts` to your user `PATH` and reopen the terminal (`python -c "import sysconfig; print(sysconfig.get_path('scripts'))"` prints the exact folder).
 
 ### Development invocation
 
@@ -133,8 +163,6 @@ python -m harness tools health rtk
 python -m harness version
 ```
 
-`python -m harness` and `harness` share the same `harness.cli:main` entrypoint.
-
 ### Engine vs project resources
 
 `pip install` installs the **Installed Engine** (Python packages `harness` and
@@ -147,8 +175,11 @@ at the project root (`.cursor/`, `.claude/`). See
 Typical external-project flow (no repository clone required):
 
 ```bash
-pip install ai-engineering-harness   # or: pip install .
 cd my-project
+python -m venv .venv
+# Windows: .\.venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
+pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.0
 harness init --profile software-engineer
 harness validate
 harness generate cursor
@@ -164,7 +195,7 @@ Validate configuration:
 
 ```bash
 pip install .
-harness validate
+python -m harness validate
 # equivalent without packaging:
 # pip install -r scripts/requirements.txt
 # python -m harness validate
@@ -247,7 +278,8 @@ The Cursor and Claude adapters are experimental. Additional agent adapters are n
 | Tool Registry + Detection + Health | Done | Declarative catalog; read-only local probes |
 | Profile / project scaffolding (`harness init`) | Done | Materialize project content from the installed pack |
 | Runtime Tool installers / wrappers | Not implemented | Install, configure, or package Tools |
-| PyPI publishing / release automation | Not implemented | Public distribution beyond local install |
+| TestPyPI package (`ai-engineering-harness==0.1.0`) | Done | Installable via TestPyPI index |
+| Production PyPI / release automation | Not implemented | Stable public distribution on pypi.org |
 | Additional Profiles (security, …) | Not implemented | Content-pack additions |
 | Additional agent adapters (Codex, …) | Not implemented | More vendor projections |
 | `harness doctor` / more CLI commands | Not implemented | Operational tooling |
