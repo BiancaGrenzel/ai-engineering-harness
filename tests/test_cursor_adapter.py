@@ -175,6 +175,22 @@ class CursorAdapterTests(unittest.TestCase):
     def test_explicit_tools_replace_profile_tools(self) -> None:
         tool_path = self.root / "docs" / "tools" / "token" / "other-tool.md"
         tool_path.write_text("# other tool\n", encoding="utf-8")
+        registry_path = self.root / "tools" / "registry.yaml"
+        registry_path.write_text(
+            "version: 1\ntools:\n"
+            "  - id: other-tool\n"
+            "    name: Other Tool\n"
+            "    description: Fixture replacement Tool.\n"
+            "    kind: cli\n"
+            "    documentation: docs/tools/token/other-tool.md\n"
+            "    capabilities: []\n"
+            "    detection:\n"
+            "      executable: other-tool\n"
+            "      version_arguments: [--version]\n"
+            "    security:\n"
+            "      baseline_risk: low\n",
+            encoding="utf-8",
+        )
         _write_harness(
             self.root,
             "version: 1\nprofile: software-engineer\n"
@@ -183,6 +199,36 @@ class CursorAdapterTests(unittest.TestCase):
         )
         resolved = resolve_harness(self.root)
         self.assertEqual(resolved.tool_ids, ["other-tool"])
+
+    def test_unknown_tool_id_not_in_registry(self) -> None:
+        _write_harness(
+            self.root,
+            "version: 1\nprofile: software-engineer\n"
+            "rules:\n  - core\nskills:\n  - task-analysis\n"
+            "tools:\n  - not-registered\n",
+        )
+        with self.assertRaises(ResolutionError) as ctx:
+            resolve_harness(self.root)
+        self.assertIn("Unknown Tool id", str(ctx.exception))
+
+    def test_tool_doc_without_registry_entry_is_not_enough(self) -> None:
+        """docs/tools alone must not satisfy Tool identity."""
+        orphan = self.root / "docs" / "tools" / "token" / "orphan-only.md"
+        orphan.write_text("# orphan\n", encoding="utf-8")
+        _write_harness(
+            self.root,
+            "version: 1\nprofile: software-engineer\n"
+            "rules:\n  - core\nskills:\n  - task-analysis\n"
+            "tools:\n  - orphan-only\n",
+        )
+        with self.assertRaises(ResolutionError):
+            resolve_harness(self.root)
+
+    def test_missing_registry_when_tools_selected(self) -> None:
+        (self.root / "tools" / "registry.yaml").unlink()
+        with self.assertRaises(ResolutionError) as ctx:
+            resolve_harness(self.root)
+        self.assertIn("Tool Registry not found", str(ctx.exception))
 
     # --- Adapter metadata ---
 

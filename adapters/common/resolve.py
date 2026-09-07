@@ -124,23 +124,36 @@ def find_skill_file(root: Path, skill_id: str) -> Path | None:
     return matches[0]
 
 
-def find_tool_file(root: Path, tool_id: str) -> Path | None:
-    tools_root = root / "docs" / "tools"
-    if not tools_root.is_dir():
-        return None
-    matches = [
-        path
-        for path in sorted(tools_root.glob(f"**/{tool_id}.md"))
-        if path.is_file() and path.name.lower() not in {"readme.md", "registry.md"}
-    ]
-    if not matches:
-        return None
-    if len(matches) > 1:
+def load_registry_tools_by_id(root: Path) -> dict[str, dict[str, Any]]:
+    """Load Tool definitions keyed by id from ``tools/registry.yaml``.
+
+    The Registry is the operational identity source. Documentation under
+    ``docs/tools/`` is referenced via each Tool's ``documentation`` field.
+    """
+    registry_path = root / "tools" / "registry.yaml"
+    if not registry_path.is_file():
         raise ResolutionError(
-            f"Tool '{tool_id}' resolves ambiguously: "
-            + ", ".join(str(path.relative_to(root)) for path in matches)
+            f"Tool Registry not found: {registry_path.relative_to(root)}"
         )
-    return matches[0]
+    data = load_yaml(registry_path)
+    if not isinstance(data, dict):
+        raise ResolutionError("Tool Registry root must be a mapping")
+    tools = data.get("tools")
+    if not isinstance(tools, list):
+        raise ResolutionError("Tool Registry 'tools' must be a list")
+
+    by_id: dict[str, dict[str, Any]] = {}
+    for entry in tools:
+        if not isinstance(entry, dict):
+            raise ResolutionError("Tool Registry entries must be mappings")
+        tool_id = entry.get("id")
+        if not isinstance(tool_id, str) or not tool_id.strip():
+            raise ResolutionError("Tool Registry entry missing non-empty 'id'")
+        tool_id = tool_id.strip()
+        if tool_id in by_id:
+            raise ResolutionError(f"Duplicate Tool id in Registry: {tool_id}")
+        by_id[tool_id] = entry
+    return by_id
 
 
 def resolve_rule_files(root: Path, rule_ids: list[str]) -> list[Path]:
@@ -182,16 +195,38 @@ def resolve_skill_files(root: Path, skill_ids: list[str]) -> list[Path]:
 
 
 def resolve_tool_files(root: Path, tool_ids: list[str]) -> list[Path]:
+    """Resolve selected Tool ids via the Registry, then to documentation paths.
+
+    Identity: ``tools/registry.yaml`` (required when any Tool is selected).
+    Documentation: each entry's ``documentation`` path under the project root.
+    """
+    if not tool_ids:
+        return []
+
+    by_id = load_registry_tools_by_id(root)
     files: list[Path] = []
     missing: list[str] = []
     for tool_id in tool_ids:
-        path = find_tool_file(root, tool_id)
-        if path is None:
+        entry = by_id.get(tool_id)
+        if entry is None:
             missing.append(tool_id)
             continue
-        files.append(path)
+        documentation = entry.get("documentation")
+        if not isinstance(documentation, str) or not documentation.strip():
+            raise ResolutionError(
+                f"Tool '{tool_id}' is missing a documentation path in the Registry"
+            )
+        doc_rel = documentation.strip().replace("\\", "/")
+        doc_path = root / doc_rel
+        if not doc_path.is_file():
+            raise ResolutionError(
+                f"Tool '{tool_id}' documentation not found: {doc_rel}"
+            )
+        files.append(doc_path)
     if missing:
-        raise ResolutionError("Missing Tools: " + ", ".join(missing))
+        raise ResolutionError(
+            "Unknown Tool id(s) in Registry: " + ", ".join(missing)
+        )
     return files
 
 

@@ -1,0 +1,19 @@
+# Minimal Tool Registry for Cursor adapter fixtures.
+# Operational identity source for selected Tools (see adapters/common/resolve.py).
+
+version: 1
+tools:
+  - id: rtk
+    name: RTK
+    description: Fixture Tool entry for adapter tests.
+    kind: cli
+    documentation: docs/tools/token/rtk.md
+    capabilities:
+      - token-reduction
+    detection:
+      executable: rtk
+      version_arguments: [--version]
+    security:
+      baseline_risk: medium
+      access:
+        - command-execution
