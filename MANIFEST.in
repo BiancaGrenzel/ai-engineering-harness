@@ -14,8 +14,14 @@ recursive-include profiles *.yaml
 recursive-include rules *.md
 recursive-include skills *.md
 include tools/registry.yaml
-# Only Tool docs needed for Registry documentation references / packaging.
-recursive-include docs/tools/token *.md
+# Only Tool docs referenced by the Registry (and needed to rebuild the content pack).
+recursive-include docs/tools/token rtk.md
+
+# Authoring-only markdown that is not part of the installed content pack.
+exclude rules/README.md
+exclude skills/README.md
+exclude skills/SKILL_TEMPLATE.md
+exclude docs/tools/token/README.md
 
 global-exclude __pycache__ *.py[cod] .DS_Store
 prune tests
@@ -29,3 +35,14 @@ prune .claude
 prune docs/architecture
 prune docs/project
 prune docs/templates
+prune docs/tools/agents
+prune docs/tools/context
+prune docs/tools/development
+prune docs/tools/evals
+prune docs/tools/infrastructure
+prune docs/tools/mcp
+prune docs/tools/memory
+prune docs/tools/observability
+prune docs/tools/rag
+prune docs/tools/search
+prune docs/tools/security
