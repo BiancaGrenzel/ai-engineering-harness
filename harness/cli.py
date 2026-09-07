@@ -11,7 +11,12 @@ import re
 import sys
 from pathlib import Path
 
-from harness.commands import cmd_generate, cmd_validate, cmd_version
+from harness.commands import (
+    cmd_generate,
+    cmd_tools_health,
+    cmd_validate,
+    cmd_version,
+)
 from harness.dispatch import supported_adapters
 
 
@@ -43,6 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Commands:\n"
             "  validate\n"
             "  generate\n"
+            "  tools\n"
             "  version"
         ),
     )
@@ -98,6 +104,37 @@ def build_parser() -> argparse.ArgumentParser:
             help="Show planned actions without writing files (passed to the adapter)",
         )
         adapter_parser.set_defaults(func=cmd_generate)
+
+    tools = sub.add_parser(
+        "tools",
+        help="Inspect Tools from the project Tool Registry",
+        description=(
+            "Thin Tool diagnostics over Registry resolution, Detection, and Health. "
+            "Does not install Tools or modify configuration."
+        ),
+    )
+    tools_sub = tools.add_subparsers(dest="tools_command", metavar="<tools-command>", required=True)
+
+    tools_health = tools_sub.add_parser(
+        "health",
+        help="Run a read-only health check for one Tool",
+        description=(
+            "Resolve a Tool from tools/registry.yaml, detect it on the local host, "
+            "and run its declarative health probe when declared. "
+            "Health logic lives in harness.tools; this command only presents results."
+        ),
+    )
+    tools_health.add_argument(
+        "tool_id",
+        help="Stable Tool id from the Tool Registry (for example: rtk)",
+    )
+    tools_health.add_argument(
+        "--root",
+        type=Path,
+        default=None,
+        help="Project root containing .harness/harness.yaml (default: discover upward)",
+    )
+    tools_health.set_defaults(func=cmd_tools_health)
 
     version = sub.add_parser(
         "version",
