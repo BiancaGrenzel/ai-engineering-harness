@@ -123,5 +123,5 @@ Central catalog: [`registry.md`](registry.md)
 - CLI for the harness
 - MCP server implementations
 - Provider adapters under `.cursor/` or `.claude/`
-- Profiles wiring
 - Numeric scoring database
+- Automatic Profile → Tool installation wiring

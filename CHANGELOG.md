@@ -20,3 +20,10 @@
 - Tool evaluation criteria
 - Token optimization category
 - RTK evaluation
+- Initial Harness configuration (`.harness/harness.yaml`)
+- Profile architecture (`profiles/`)
+- Software Engineer profile
+- Harness configuration schema (`schemas/harness.schema.json`)
+- Profile schema (`schemas/profile.schema.json`)
+- Configuration architecture documentation
+- Configuration validation script (`scripts/validate-config.py`)

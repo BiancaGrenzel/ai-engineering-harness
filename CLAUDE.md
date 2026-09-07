@@ -14,4 +14,4 @@ Before modifying the repository:
 
 5. Validate changes before completion.
 
-The canonical source for rules and skills is located in /rules and /skills. Tool catalog documentation lives in /docs/tools.
+The canonical source for rules and skills is located in /rules and /skills. Tool catalog documentation lives in /docs/tools. Project harness configuration lives in /.harness. Profiles live in /profiles.

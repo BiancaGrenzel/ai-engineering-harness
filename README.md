@@ -22,30 +22,59 @@ This is not a giant prompt collection. It is a structured harness based on Conte
 
 ## Architecture
 
-Canonical layout (target):
+Canonical layout:
 
 ```text
 rules/       # persistent agent behavior (canonical)
 skills/      # specialized procedures (canonical)
 docs/        # documentation (includes Tool Registry)
+profiles/    # role-specific compositions
+.harness/    # project harness configuration
+schemas/     # JSON Schemas for configuration
+scripts/     # small development utilities
 tools/       # integrations and utilities (planned)
-profiles/    # role-specific compositions (planned)
-.harness/    # harness configuration (planned)
 .cursor/     # Cursor adapter (planned)
 .claude/     # Claude adapter (planned)
 ```
 
 Provider-specific directories act as adapters. Canonical resources stay vendor-neutral.
 
-### Rules, Skills, Tools
+### Rules, Skills, Tools, Profiles, Configuration
 
 | Layer | Role |
 | --- | --- |
 | **Rules** | Persistent agent behavior |
 | **Skills** | Specialized procedures |
 | **Tools** | External capabilities (CLI, MCP, services, utilities, …) |
+| **Profiles** | Reusable default compositions of Rules, Skills, and Tools |
+| **Configuration** | Project selection of a Profile and optional overrides (`.harness/harness.yaml`) |
 
 The **Tool Registry** documents external tools with evidence-based metadata: type, status, security, token/context impact, and agent compatibility. Catalog docs live in [`docs/tools/`](docs/tools/). Runtime integrations under `tools/` are not implemented yet.
+
+## Configuration
+
+Project configuration is declarative and lives in [`.harness/harness.yaml`](.harness/harness.yaml).
+
+- Configuration declares desired state (which Profile and resource lists apply)
+- Profiles compose defaults ([`profiles/`](profiles/))
+- Rules define persistent behavior
+- Skills define specialized procedures
+- Tools provide external capabilities
+
+Contract: [`docs/architecture/configuration.md`](docs/architecture/configuration.md)
+
+Validate syntax (CLI is **not** implemented yet):
+
+```bash
+pip install -r scripts/requirements.txt
+python scripts/validate-config.py
+```
+
+Tests:
+
+```bash
+python -m unittest discover -s tests -v
+```
 
 ## Principles
 
@@ -58,7 +87,7 @@ The **Tool Registry** documents external tools with evidence-based metadata: typ
 - Verify before claiming success
 - Keep the harness useful across agents and disciplines
 
-See [AGENTS.md](AGENTS.md) for the full agent instructions, [rules/](rules/) for canonical Rules, and [skills/](skills/) for canonical Skills. The Skills contract is defined in [docs/architecture/skills.md](docs/architecture/skills.md). The Tools contract is defined in [docs/architecture/tools.md](docs/architecture/tools.md).
+See [AGENTS.md](AGENTS.md) for the full agent instructions, [rules/](rules/) for canonical Rules, and [skills/](skills/) for canonical Skills. The Skills contract is defined in [docs/architecture/skills.md](docs/architecture/skills.md). The Tools contract is defined in [docs/architecture/tools.md](docs/architecture/tools.md). The Configuration contract is defined in [docs/architecture/configuration.md](docs/architecture/configuration.md).
 
 ## Supported Environments
 
@@ -76,7 +105,8 @@ Adapters are not implemented yet.
 | Rules foundation | Done | Canonical Rules + project docs |
 | Skills architecture | Done | Skill contract + core and AI Engineering Skills |
 | Tool Registry architecture | Done | Catalog, template, evaluation policy, RTK docs |
-| Profiles, `.harness/`, runtime `tools/` integrations | Not implemented | Broader harness structure |
+| Profiles + `.harness/` configuration | Done | Declarative config, schema, syntax validator |
+| Runtime `tools/` integrations | Not implemented | Installers, wrappers, adapters for Tools |
 | Agent adapters (`.cursor/`, `.claude/`, …) | Not implemented | Provider-specific projection |
 | CLI / `harness doctor` / installers | Not implemented | Operational tooling |
 | MCP, RTK, RAG, observability runtime integrations | Not implemented | External capability wiring |

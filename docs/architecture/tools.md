@@ -32,12 +32,12 @@ These form factors are **not interchangeable**. The registry must record the pri
 | Rule | Persistent behavior | Prefer filtered tool output |
 | Skill | Specialized procedure | Token optimization workflow |
 | Tool | External capability | RTK |
-| Profile | Composition | AI engineering profile |
+| Profile | Composition | Software engineer profile |
 
 - **Rules** constrain default behavior.
 - **Skills** describe how to perform a problem class and may reference Tools.
 - **Tools** are external capabilities Skills or agents may invoke.
-- **Profiles** (future) compose Rules, Skills, Tools, and configuration.
+- **Profiles** compose Rules, Skills, and Tools; project selection lives in `.harness/harness.yaml`. See [`docs/architecture/configuration.md`](configuration.md).
 
 Do not duplicate Tool installation or CLI details inside Skills. Reference Tool docs instead.
 

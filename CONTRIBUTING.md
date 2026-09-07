@@ -39,7 +39,7 @@ Do not recommend a tool only because it is popular.
 
 ## Avoid duplication
 
-Canonical resources live in `rules/`, `skills/`, and `docs/` (and later `tools/`, `profiles/`).
+Canonical resources live in `rules/`, `skills/`, `docs/`, `profiles/`, and `.harness/` (and later `tools/`).
 
 Do not create parallel copies in provider adapters unless an adapter mapping is required.
 
@@ -49,6 +49,15 @@ Canonical Rules, Skills, and docs must remain usable across agents and stacks.
 
 Provider-specific details belong in adapters.
 
+## Configuration and Profiles
+
+- Project config: [`.harness/harness.yaml`](.harness/harness.yaml)
+- Profiles: [`profiles/`](profiles/)
+- Contract: [`docs/architecture/configuration.md`](docs/architecture/configuration.md)
+- Syntax check: `python scripts/validate-config.py` (after `pip install -r scripts/requirements.txt`)
+
+Do not put Rule prose, Skill workflows, or unverified Tool settings into configuration.
+
 ## Verify changes
 
 Before submitting:
@@ -57,6 +66,7 @@ Before submitting:
 - Check internal links
 - Confirm no secrets were added
 - Confirm the change matches the requested scope
+- When touching configuration or schemas, run the validator and its tests
 - State what was validated and what was not
 
 ## Keep documentation current

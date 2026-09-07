@@ -446,6 +446,7 @@ docs/       → canonical documentation
 tools/      → integrations and utilities
 profiles/   → role-specific configurations
 .harness/   → harness configuration
+schemas/    → configuration schemas
 
 ```
 
@@ -460,6 +461,8 @@ Provider-specific directories such as:
 should act as adapters whenever possible.
 
 Do not introduce provider-specific behavior into canonical resources unless there is a clear reason.
+
+Project selection of Profiles, Rules, Skills, and Tools is declared in `.harness/harness.yaml`. The configuration contract is defined in `docs/architecture/configuration.md`.
 
 ---
 
@@ -486,9 +489,10 @@ Profiles should compose existing:
 - Rules
 - Skills
 - Tools
-- Configurations
 
 Do not duplicate the underlying resources inside profiles.
+
+Profiles supply defaults. `.harness/harness.yaml` selects a Profile and may replace lists for a specific project. See `docs/architecture/configuration.md`.
 
 ---
 
