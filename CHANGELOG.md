@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.1.1
+
+### Changed
+
+- Claude and Cursor adapters project Rules into `.claude/rules/` and `.cursor/rules/` (no nested `rules/harness/` subdirectory)
+- README documents TestPyPI install `ai-engineering-harness==0.1.1`, venv-first workflow, and Windows `PATH` / `python -m harness` fallbacks
+- Content pack version tracks the distribution version (`0.1.1`)
+
+## 0.1.0
+
 ### Added
 
 - `harness init` / `harness init --profile <name>` to materialize a Harness-enabled project
@@ -58,7 +68,7 @@
 - Resolve / validate / tools health prefer `<project>/.harness/` when present; then legacy root pack layout; otherwise the installed pack
 - `.cursor/` and `.claude/` remain project-root vendor projections only
 - Document Installed Engine vs Built-in Content Pack vs Project Content (`.harness/`) vs Generated Vendor Projection
-- Content pack version equals Harness distribution version (`0.1.0`) for now
+- Content pack version equals Harness distribution version for now
 - Document installed (`harness`) vs development (`python -m harness`) invocation
 - Cursor adapter conflicts are **fail-closed** (preflight before any writes)
 - Cursor Rules default to `alwaysApply: false` with description (Apply Intelligently)

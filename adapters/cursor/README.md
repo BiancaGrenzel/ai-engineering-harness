@@ -15,7 +15,7 @@ Preflight (fail-closed)
         ↓
 Apply
         ↓
-.cursor/rules/harness/*.mdc
+.cursor/rules/*.mdc
 .cursor/skills/harness/*/SKILL.md
 .harness/adapters/cursor.managed.json
 ```
@@ -39,7 +39,7 @@ Canonical content stays in the content pack (or this repository when developing 
 
 | Capability | Projection |
 | --- | --- |
-| Rules | `.cursor/rules/harness/<category>--<stem>.mdc` thin wrappers with `@`-references to canonical Rule markdown |
+| Rules | `.cursor/rules/<category>--<stem>.mdc` thin wrappers with `@`-references to canonical Rule markdown |
 | Skills | `.cursor/skills/harness/<skill-id>/SKILL.md` thin wrappers that point at canonical `skills/**/SKILL.md` |
 
 Declared in `adapter.yaml` and enforced by the generator.
@@ -183,7 +183,7 @@ Re-running the generator with the same harness config regenerates the same manag
 ## Generated files
 
 ```text
-.cursor/rules/harness/<category>--<rule-stem>.mdc
+.cursor/rules/<category>--<rule-stem>.mdc
 .cursor/skills/harness/<skill-id>/SKILL.md
 .harness/adapters/cursor.managed.json
 ```

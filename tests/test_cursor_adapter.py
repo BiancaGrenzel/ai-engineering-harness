@@ -274,7 +274,7 @@ class CursorAdapterTests(unittest.TestCase):
     def test_initial_generation(self) -> None:
         code = cursor_generate.run(self.root, dry_run=False)
         self.assertEqual(code, 0)
-        rule = self.root / ".cursor" / "rules" / "harness" / "core--core.mdc"
+        rule = self.root / ".cursor" / "rules" / "core--core.mdc"
         skill = self.root / ".cursor" / "skills" / "harness" / "task-analysis" / "SKILL.md"
         manifest = self.root / ".harness" / "adapters" / "cursor.managed.json"
         self.assertTrue(rule.is_file())
@@ -294,11 +294,11 @@ class CursorAdapterTests(unittest.TestCase):
         self.assertEqual(data["adapter"], "cursor")
         self.assertEqual(data["adapter_version"], 1)
         self.assertEqual(data["marker"], MANAGED_MARKER)
-        self.assertIn(".cursor/rules/harness/core--core.mdc", data["files"])
+        self.assertIn(".cursor/rules/core--core.mdc", data["files"])
 
     def test_repeated_generation_idempotent(self) -> None:
         self.assertEqual(cursor_generate.run(self.root, dry_run=False), 0)
-        rule = self.root / ".cursor" / "rules" / "harness" / "core--core.mdc"
+        rule = self.root / ".cursor" / "rules" / "core--core.mdc"
         first = rule.read_text(encoding="utf-8")
         self.assertEqual(cursor_generate.run(self.root, dry_run=False), 0)
         second = rule.read_text(encoding="utf-8")
@@ -306,7 +306,7 @@ class CursorAdapterTests(unittest.TestCase):
 
     def test_harness_managed_file_updated(self) -> None:
         self.assertEqual(cursor_generate.run(self.root, dry_run=False), 0)
-        rule = self.root / ".cursor" / "rules" / "harness" / "core--core.mdc"
+        rule = self.root / ".cursor" / "rules" / "core--core.mdc"
         rule.write_text(
             f"---\nalwaysApply: false\n---\n\n{MANAGED_MARKER}\n\nstale\n",
             encoding="utf-8",
@@ -317,7 +317,7 @@ class CursorAdapterTests(unittest.TestCase):
         self.assertNotIn("stale", text)
 
     def test_user_managed_file_not_overwritten(self) -> None:
-        target = self.root / ".cursor" / "rules" / "harness" / "core--core.mdc"
+        target = self.root / ".cursor" / "rules" / "core--core.mdc"
         target.parent.mkdir(parents=True, exist_ok=True)
         original = "---\nalwaysApply: false\n---\n\nuser owned\n"
         target.write_text(original, encoding="utf-8")
@@ -342,12 +342,12 @@ class CursorAdapterTests(unittest.TestCase):
             "skills:\n  - task-analysis\ntools:\n  - rtk\n",
         )
 
-        conflict_target = self.root / ".cursor" / "rules" / "harness" / "security--security.mdc"
+        conflict_target = self.root / ".cursor" / "rules" / "security--security.mdc"
         conflict_target.parent.mkdir(parents=True, exist_ok=True)
         conflict_original = "---\nalwaysApply: false\n---\n\nuser owned security\n"
         conflict_target.write_text(conflict_original, encoding="utf-8")
 
-        core_out = self.root / ".cursor" / "rules" / "harness" / "core--core.mdc"
+        core_out = self.root / ".cursor" / "rules" / "core--core.mdc"
         skill_out = (
             self.root / ".cursor" / "skills" / "harness" / "task-analysis" / "SKILL.md"
         )
@@ -373,8 +373,8 @@ class CursorAdapterTests(unittest.TestCase):
             "skills:\n  - task-analysis\ntools:\n  - rtk\n",
         )
         self.assertEqual(cursor_generate.run(self.root, dry_run=False), 0)
-        stale = self.root / ".cursor" / "rules" / "harness" / "security--security.mdc"
-        keep = self.root / ".cursor" / "rules" / "harness" / "core--core.mdc"
+        stale = self.root / ".cursor" / "rules" / "security--security.mdc"
+        keep = self.root / ".cursor" / "rules" / "core--core.mdc"
         skill = self.root / ".cursor" / "skills" / "harness" / "task-analysis" / "SKILL.md"
         self.assertTrue(stale.is_file())
         self.assertTrue(keep.is_file())
@@ -395,14 +395,14 @@ class CursorAdapterTests(unittest.TestCase):
             )
         )
         self.assertNotIn(
-            ".cursor/rules/harness/security--security.mdc",
+            ".cursor/rules/security--security.mdc",
             manifest["files"],
         )
-        self.assertIn(".cursor/rules/harness/core--core.mdc", manifest["files"])
+        self.assertIn(".cursor/rules/core--core.mdc", manifest["files"])
 
     def test_unmanaged_stale_file_is_not_removed(self) -> None:
         self.assertEqual(cursor_generate.run(self.root, dry_run=False), 0)
-        stale_rel = ".cursor/rules/harness/legacy--gone.mdc"
+        stale_rel = ".cursor/rules/legacy--gone.mdc"
         stale = self.root / stale_rel
         stale.write_text("---\nalwaysApply: false\n---\n\nuser kept\n", encoding="utf-8")
         manifest_path = self.root / ".harness" / "adapters" / "cursor.managed.json"
@@ -461,7 +461,7 @@ class CursorAdapterTests(unittest.TestCase):
     def test_preflight_detects_conflicts_without_writes(self) -> None:
         planned = [
             PlannedFile(
-                relative_path=".cursor/rules/harness/core--core.mdc",
+                relative_path=".cursor/rules/core--core.mdc",
                 content=f"{MANAGED_MARKER}\nok\n",
                 kind="rule",
             )

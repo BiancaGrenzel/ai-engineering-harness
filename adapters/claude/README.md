@@ -15,7 +15,7 @@ Preflight (fail-closed)
         ↓
 Apply
         ↓
-.claude/rules/harness/*.md
+.claude/rules/*.md
 .claude/skills/*/SKILL.md
 .harness/adapters/claude.managed.json
 ```
@@ -39,7 +39,7 @@ Canonical content stays in `rules/` and `skills/`. Generated Claude files are a 
 
 | Capability | Projection |
 | --- | --- |
-| Rules | `.claude/rules/harness/<category>--<stem>.md` materialized projections of canonical Rule markdown |
+| Rules | `.claude/rules/<category>--<stem>.md` materialized projections of canonical Rule markdown |
 | Skills | `.claude/skills/<skill-id>/SKILL.md` self-contained Skills (frontmatter + workflow body) |
 
 Declared in `adapter.yaml` and enforced by the generator.
@@ -69,7 +69,7 @@ Official Claude Code docs: project instructions may live at `./CLAUDE.md` or `./
 ### Impact
 
 - Project-root `CLAUDE.md` (including this repository’s own file) is left untouched
-- Harness Rules/Skills are projected only under `.claude/rules/harness/` and `.claude/skills/`
+- Harness Rules/Skills are projected only under `.claude/rules/` and `.claude/skills/`
 
 ### When to revise
 
@@ -106,7 +106,7 @@ Optional per-Rule `paths` when canonical metadata or adapter policy maps exist.
 
 | Strategy | Status | Trade-off |
 | --- | --- | --- |
-| Materialized Rule body under `.claude/rules/harness/` | **Used** | Reliable load at launch; regenerate to sync; higher drift risk than references |
+| Materialized Rule body under `.claude/rules/` | **Used** | Reliable load at launch; regenerate to sync; higher drift risk than references |
 | Thin Rule wrapper + `@path` import | **Not used** | `@path` imports are documented for **CLAUDE.md**, not verified for `.claude/rules/` |
 | Symlink canonical Rules into `.claude/rules/` | **Not used** | Officially supported for rules, but poor Windows/CI portability (same rationale as Cursor) |
 | Thin Skill wrapper pointing at project-local canonical path | **Not used** | Consumer projects no longer carry `skills/` |
@@ -119,7 +119,7 @@ If Claude later documents `@path` expansion inside `.claude/rules/` equivalently
 
 ### Generation model
 
-1. **Rules** — write managed `.md` files under `.claude/rules/harness/` containing the canonical Rule body plus a managed header
+1. **Rules** — write managed `.md` files under `.claude/rules/` containing the canonical Rule body plus a managed header
 2. **Skills** — write thin `SKILL.md` wrappers under `.claude/skills/<skill-id>/` that preserve `name` / `description` and instruct the agent to follow the canonical Skill path
 3. **Does not** manage `CLAUDE.md`
 
@@ -176,7 +176,7 @@ Re-running the generator with the same harness config regenerates the same manag
 ## Generated files
 
 ```text
-.claude/rules/harness/<category>--<rule-stem>.md
+.claude/rules/<category>--<rule-stem>.md
 .claude/skills/<skill-id>/SKILL.md
 .harness/adapters/claude.managed.json
 ```

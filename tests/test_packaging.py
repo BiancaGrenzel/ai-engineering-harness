@@ -59,7 +59,7 @@ class PackagingMetadataTests(unittest.TestCase):
         self.assertEqual(dynamic["version"]["attr"], "harness.__version__")
         from harness import __version__
 
-        self.assertEqual(__version__, "0.1.0")
+        self.assertEqual(__version__, "0.1.1")
 
     def test_packages_include_harness_and_adapters(self) -> None:
         data = _load_pyproject()

@@ -172,7 +172,7 @@ class ClaudeAdapterTests(unittest.TestCase):
             metadata.output_path("managed_manifest"),
             ".harness/adapters/claude.managed.json",
         )
-        self.assertEqual(metadata.output_path("rules_dir"), ".claude/rules/harness")
+        self.assertEqual(metadata.output_path("rules_dir"), ".claude/rules")
         self.assertEqual(metadata.output_path("skills_dir"), ".claude/skills")
 
     def test_adapter_metadata_rejects_capability_overlap(self) -> None:
@@ -210,7 +210,7 @@ class ClaudeAdapterTests(unittest.TestCase):
     def test_initial_generation(self) -> None:
         code = claude_generate.run(self.root, dry_run=False)
         self.assertEqual(code, 0)
-        rule = self.root / ".claude" / "rules" / "harness" / "core--core.md"
+        rule = self.root / ".claude" / "rules" / "core--core.md"
         skill = self.root / ".claude" / "skills" / "task-analysis" / "SKILL.md"
         manifest = self.root / ".harness" / "adapters" / "claude.managed.json"
         self.assertTrue(rule.is_file())
@@ -230,12 +230,12 @@ class ClaudeAdapterTests(unittest.TestCase):
         self.assertEqual(data["adapter"], "claude")
         self.assertEqual(data["adapter_version"], 1)
         self.assertEqual(data["marker"], MANAGED_MARKER)
-        self.assertIn(".claude/rules/harness/core--core.md", data["files"])
+        self.assertIn(".claude/rules/core--core.md", data["files"])
         self.assertIn(".claude/skills/task-analysis/SKILL.md", data["files"])
 
     def test_repeated_generation_idempotent(self) -> None:
         self.assertEqual(claude_generate.run(self.root, dry_run=False), 0)
-        rule = self.root / ".claude" / "rules" / "harness" / "core--core.md"
+        rule = self.root / ".claude" / "rules" / "core--core.md"
         first = rule.read_text(encoding="utf-8")
         self.assertEqual(claude_generate.run(self.root, dry_run=False), 0)
         second = rule.read_text(encoding="utf-8")
@@ -249,7 +249,7 @@ class ClaudeAdapterTests(unittest.TestCase):
 
     def test_harness_managed_file_updated(self) -> None:
         self.assertEqual(claude_generate.run(self.root, dry_run=False), 0)
-        rule = self.root / ".claude" / "rules" / "harness" / "core--core.md"
+        rule = self.root / ".claude" / "rules" / "core--core.md"
         rule.write_text(f"{MANAGED_MARKER}\n\nstale\n", encoding="utf-8")
         self.assertEqual(claude_generate.run(self.root, dry_run=False), 0)
         text = rule.read_text(encoding="utf-8")
@@ -257,7 +257,7 @@ class ClaudeAdapterTests(unittest.TestCase):
         self.assertNotIn("stale", text)
 
     def test_user_managed_file_not_overwritten(self) -> None:
-        target = self.root / ".claude" / "rules" / "harness" / "core--core.md"
+        target = self.root / ".claude" / "rules" / "core--core.md"
         target.parent.mkdir(parents=True, exist_ok=True)
         original = "# user owned claude rule\n"
         target.write_text(original, encoding="utf-8")
@@ -282,12 +282,12 @@ class ClaudeAdapterTests(unittest.TestCase):
             "skills:\n  - task-analysis\ntools:\n  - rtk\n",
         )
 
-        conflict_target = self.root / ".claude" / "rules" / "harness" / "security--security.md"
+        conflict_target = self.root / ".claude" / "rules" / "security--security.md"
         conflict_target.parent.mkdir(parents=True, exist_ok=True)
         conflict_original = "# user owned security\n"
         conflict_target.write_text(conflict_original, encoding="utf-8")
 
-        core_out = self.root / ".claude" / "rules" / "harness" / "core--core.md"
+        core_out = self.root / ".claude" / "rules" / "core--core.md"
         skill_out = self.root / ".claude" / "skills" / "task-analysis" / "SKILL.md"
         manifest = self.root / ".harness" / "adapters" / "claude.managed.json"
 
@@ -311,8 +311,8 @@ class ClaudeAdapterTests(unittest.TestCase):
             "skills:\n  - task-analysis\ntools:\n  - rtk\n",
         )
         self.assertEqual(claude_generate.run(self.root, dry_run=False), 0)
-        stale = self.root / ".claude" / "rules" / "harness" / "security--security.md"
-        keep = self.root / ".claude" / "rules" / "harness" / "core--core.md"
+        stale = self.root / ".claude" / "rules" / "security--security.md"
+        keep = self.root / ".claude" / "rules" / "core--core.md"
         skill = self.root / ".claude" / "skills" / "task-analysis" / "SKILL.md"
         self.assertTrue(stale.is_file())
         self.assertTrue(keep.is_file())
@@ -333,14 +333,14 @@ class ClaudeAdapterTests(unittest.TestCase):
             )
         )
         self.assertNotIn(
-            ".claude/rules/harness/security--security.md",
+            ".claude/rules/security--security.md",
             manifest["files"],
         )
-        self.assertIn(".claude/rules/harness/core--core.md", manifest["files"])
+        self.assertIn(".claude/rules/core--core.md", manifest["files"])
 
     def test_unmanaged_stale_file_is_not_removed(self) -> None:
         self.assertEqual(claude_generate.run(self.root, dry_run=False), 0)
-        stale_rel = ".claude/rules/harness/legacy--gone.md"
+        stale_rel = ".claude/rules/legacy--gone.md"
         stale = self.root / stale_rel
         stale.write_text("# user kept\n", encoding="utf-8")
         manifest_path = self.root / ".harness" / "adapters" / "claude.managed.json"
@@ -417,7 +417,7 @@ class ClaudeAdapterTests(unittest.TestCase):
     def test_preflight_detects_conflicts_without_writes(self) -> None:
         planned = [
             PlannedFile(
-                relative_path=".claude/rules/harness/core--core.md",
+                relative_path=".claude/rules/core--core.md",
                 content=f"{MANAGED_MARKER}\nok\n",
                 kind="rule",
             )

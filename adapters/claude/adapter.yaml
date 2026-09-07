@@ -24,13 +24,13 @@ input:
   - docs/tools/
 
 output:
-  rules_dir: .claude/rules/harness
+  rules_dir: .claude/rules
   skills_dir: .claude/skills
   managed_manifest: .harness/adapters/claude.managed.json
 
 notes:
   - Tools selected in harness.yaml are resolved and reported but not projected into Claude-native config.
-  - "Rules are materialized under .claude/rules/harness/ (canonical remains source of truth; regenerate to sync)."
+  - "Rules are materialized under .claude/rules/ (canonical remains source of truth; regenerate to sync)."
   - "Skills are thin wrappers under .claude/skills/<skill-id>/SKILL.md pointing at canonical skills/."
   - CLAUDE.md is intentionally not managed by this adapter (project/user instruction file).
   - "At-path imports are verified for CLAUDE.md only; not used in .claude/rules/ projections."

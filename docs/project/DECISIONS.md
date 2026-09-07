@@ -56,7 +56,7 @@ This is an index, not a replacement for architecture documents or ADRs.
 **Status:** Accepted for Claude adapter v1.
 **Reference:** `adapters/claude/README.md`.
 
-**Decision:** Claude Rules are materialized under `.claude/rules/harness/` rather than at-path thin wrappers.
+**Decision:** Claude Rules are materialized under `.claude/rules/` rather than at-path thin wrappers.
 **Reason:** Official at-path imports are documented for `CLAUDE.md`, not verified for `.claude/rules/`; inventing that behavior would be unsafe.
 **Status:** Accepted for Claude adapter v1.
 **Reference:** `adapters/claude/README.md`.

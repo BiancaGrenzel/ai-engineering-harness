@@ -90,4 +90,4 @@ Expected pattern:
 3. Profiles may select subsets of Rules for a role or discipline.
 4. Adapter-specific behavior stays in the adapter, not in canonical Rules.
 
-See [`adapters/`](../adapters/) for the adapter contract. The Cursor adapter can project selected Rules into `.cursor/rules/harness/` as thin wrappers.
+See [`adapters/`](../adapters/) for the adapter contract. The Cursor adapter can project selected Rules into `.cursor/rules/` as thin wrappers.

@@ -48,7 +48,7 @@ Canonical resources stay vendor-neutral in the content pack.
 
 | Layer | How it appears | Role |
 | --- | --- | --- |
-| **Installed Engine** | `pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.0` → `harness` + `adapters` + content pack | CLI, resolution, generation, detection, health |
+| **Installed Engine** | `pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.1` → `harness` + `adapters` + content pack | CLI, resolution, generation, detection, health |
 | **Built-in content pack** | `harness/content/_data` (installed) or repo root (source authoring) | Immutable Profiles, Rules, Skills, Schemas, Tools shipped with the package |
 | **Project content** | `harness init` → `.harness/` (harness.yaml + profiles/rules/skills/schemas/tools/docs) | Project Harness source of truth after init |
 | **Vendor Projection** | `harness generate cursor\|claude` → `.cursor/`, `.claude/` at project root | Self-contained agent-specific generated files |
@@ -56,7 +56,7 @@ Canonical resources stay vendor-neutral in the content pack.
 End users install the package; they do **not** need this repository checkout.
 The repository is only required for Harness development.
 
-Harness version `0.1.0` ships Content Pack version `0.1.0` (same distribution version for now).
+Harness version `0.1.1` ships Content Pack version `0.1.1` (same distribution version for now).
 
 Consumer projects keep Harness content under `.harness/`. They do **not** place
 `profiles/`, `rules/`, `skills/`, `schemas/`, `tools/`, or `docs/` at the project
@@ -106,14 +106,14 @@ python -m venv .venv
 # macOS / Linux
 # source .venv/bin/activate
 
-pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.0
+pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.1
 harness version
 ```
 
 Without a venv, prefer the module entrypoint (always works if the package is installed for that Python):
 
 ```bash
-pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.0
+pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.1
 python -m harness version
 ```
 
@@ -179,7 +179,7 @@ cd my-project
 python -m venv .venv
 # Windows: .\.venv\Scripts\Activate.ps1
 # macOS/Linux: source .venv/bin/activate
-pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.0
+pip install -i https://test.pypi.org/simple/ ai-engineering-harness==0.1.1
 harness init --profile software-engineer
 harness validate
 harness generate cursor
@@ -278,7 +278,7 @@ The Cursor and Claude adapters are experimental. Additional agent adapters are n
 | Tool Registry + Detection + Health | Done | Declarative catalog; read-only local probes |
 | Profile / project scaffolding (`harness init`) | Done | Materialize project content from the installed pack |
 | Runtime Tool installers / wrappers | Not implemented | Install, configure, or package Tools |
-| TestPyPI package (`ai-engineering-harness==0.1.0`) | Done | Installable via TestPyPI index |
+| TestPyPI package (`ai-engineering-harness==0.1.1`) | Done | Installable via TestPyPI index |
 | Production PyPI / release automation | Not implemented | Stable public distribution on pypi.org |
 | Additional Profiles (security, …) | Not implemented | Content-pack additions |
 | Additional agent adapters (Codex, …) | Not implemented | More vendor projections |

@@ -85,7 +85,7 @@ Distribution name: `ai-engineering-harness`. Import package: `harness`.
 pip install .
 ```
 
-This installs the **Installed Engine** locally, including a read-only built-in content pack (Harness version and content-pack version are the same for now, e.g. `0.1.0`). PyPI publishing and release automation are future work.
+This installs the **Installed Engine** locally, including a read-only built-in content pack (Harness version and content-pack version are the same for now, e.g. `0.1.1`). PyPI publishing and release automation are future work.
 
 End users do **not** need a clone of this repository. The repository is for Harness development.
 

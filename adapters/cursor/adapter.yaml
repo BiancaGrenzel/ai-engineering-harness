@@ -24,7 +24,7 @@ input:
   - docs/tools/
 
 output:
-  rules_dir: .cursor/rules/harness
+  rules_dir: .cursor/rules
   skills_dir: .cursor/skills/harness
   managed_manifest: .harness/adapters/cursor.managed.json
 
