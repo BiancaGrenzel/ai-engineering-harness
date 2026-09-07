@@ -24,6 +24,11 @@ tools:
     detection:
       executable: rtk
       version_arguments: [--version]
+    # Minimal local liveness probe only. Exit 0 proves the binary starts; it
+    # does not prove wrapping, filtering, or token-reduction behavior.
+    health:
+      kind: cli
+      arguments: [--version]
     security:
       baseline_risk: medium
       access:
